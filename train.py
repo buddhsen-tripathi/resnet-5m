@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms as T
+from torchvision.transforms import v2
 
 from model import MAX_PARAMS, ResNet, count_params
 
@@ -24,6 +25,7 @@ def get_args():
     p.add_argument("--warmup-epochs", type=int, default=5)
     p.add_argument("--label-smoothing", type=float, default=0.1)
     p.add_argument("--autoaugment", action="store_true", help="add TrivialAugmentWide")
+    p.add_argument("--mix", type=float, default=0.0, help="probability of applying CutMix or MixUp to a batch")
     p.add_argument("--erase-p", type=float, default=0.5, help="RandomErasing (cutout) probability")
     p.add_argument("--compile", action="store_true")
     p.add_argument("--workers", type=int, default=8)
@@ -88,6 +90,7 @@ def main():
         opt, lambda s: s / warmup if s < warmup else 0.5 * (1 + math.cos(math.pi * (s - warmup) / (steps - warmup)))
     )
     criterion = nn.CrossEntropyLoss(label_smoothing=args.label_smoothing)
+    mix = v2.RandomChoice([v2.CutMix(num_classes=10), v2.MixUp(num_classes=10)])
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -103,8 +106,10 @@ def main():
         net.train()
         t0, loss_sum = time.time(), torch.zeros((), device=device)
         for x, y in train_loader:
-            x = x.to(device, non_blocking=True, memory_format=torch.channels_last)
-            y = y.to(device, non_blocking=True)
+            x, y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
+            if torch.rand(()) < args.mix:
+                x, y = mix(x, y)  # y becomes soft labels
+            x = x.contiguous(memory_format=torch.channels_last)
             with torch.autocast(device.type, torch.bfloat16, enabled=amp):
                 loss = criterion(net(x), y)
             opt.zero_grad(set_to_none=True)
