@@ -4,11 +4,15 @@ A parameter-efficient ResNet for CIFAR-10, trained from scratch under a **5M tra
 
 Built for the [CIFAR-10 ResNet Architecture Challenge](https://www.kaggle.com/competitions/cifar-10-res-net-architecture-challenge-dl) (NYU Tandon Deep Learning, Fall 2026): highest accuracy on a held-out image set, at most 5M trainable parameters, trained only on the 50k CIFAR-10 training images, no pretrained weights or external data.
 
-## Setup
+## Usage
 
 ```bash
 uv sync
+uv run python train.py --out checkpoints/model.pt   # downloads CIFAR-10 to data/
+uv run python predict.py --checkpoint checkpoints/model.pt
 ```
+
+`predict.py` reads `data/kaggle/test.csv` and `data/kaggle/test_images/`, averages each image with its horizontal flip, and writes `submission.csv` (`id,label`). Checkpoints store the model config, so any run can be loaded without extra flags. `train.py --resume` continues from the `--out` checkpoint after an interruption.
 
 ## Model
 
@@ -27,3 +31,17 @@ Widths and blocks per stage are configurable (`--widths`, `--blocks`, `--no-se`)
 | B | 64-128-256 | 3-5-3 | 4.96M | 0.80 |
 | C | 80-160-320 | 2-3-2 | 4.84M | 0.78 |
 | D | 96-192-320 | 2-2-2 | 4.94M | 0.86 |
+
+## Training recipe
+
+- SGD (momentum 0.9, Nesterov), lr 0.2, batch 256, 5-epoch linear warmup then cosine decay, 200 epochs
+- Weight decay 5e-4 (not on BN/bias), label smoothing 0.1
+- Augmentation: random crop (reflect pad 4), horizontal flip, random erasing (`--erase-p`); optional TrivialAugment (`--autoaugment`)
+- bf16 mixed precision and channels-last on CUDA; checkpoint written atomically every epoch
+
+The official 10k CIFAR-10 test split is used only to report accuracy, never for training or model selection inside a run.
+
+## Kaggle notes
+
+- The test set is 2,000 32x32 PNGs plus `test.csv` (`id,filename`); submissions are `id,label` with CIFAR-10 class indices.
+- Bulk download is not available for this competition, and per-file API downloads are rate-limited (HTTP 429). Predictions can instead be made inside a private Kaggle notebook with the competition data attached and the checkpoint uploaded as a private dataset, running `predict.py --data-dir <competition input dir>`.
