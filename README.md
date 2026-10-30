@@ -4,6 +4,20 @@ A parameter-efficient ResNet for CIFAR-10, trained from scratch under a **5M tra
 
 Built for the [CIFAR-10 ResNet Architecture Challenge](https://www.kaggle.com/competitions/cifar-10-res-net-architecture-challenge-dl) (NYU Tandon Deep Learning, Fall 2026): highest accuracy on a held-out image set, at most 5M trainable parameters, trained only on the 50k CIFAR-10 training images, no pretrained weights or external data.
 
+## Results
+
+![Final CIFAR-10 test accuracy of every run](assets/summary.png)
+
+The best single model is a **4.84M-parameter pre-activation ResNet distilled from an ensemble of five of our own models**:
+
+| | |
+|---|---|
+| CIFAR-10 test accuracy | **97.22%** (97.31% with flip TTA) |
+| Kaggle public leaderboard | **0.889** |
+| Trainable parameters | 4,836,010 |
+
+What moved the needle, in order: stronger data augmentation (+0.5 to +0.75 pts), then knowledge distillation on top of it (+0.2 to +0.5 pts). Architecture choices within the budget mattered least (all within 0.5 pts).
+
 ## Usage
 
 ```bash
@@ -105,6 +119,35 @@ uv run python train.py --no-se --autoaugment --mix 0.5 --out checkpoints/A_nose_
 - Strong augmentation trains slower early (lower accuracy until ~epoch 150) and catches up once the learning rate decays.
 - Random erasing on top of both is neutral.
 - Kaggle public score of C + both, no erasing: **0.884** (+1.1 over round 1).
+
+### Round 3: knowledge distillation
+
+The ensembles are better than any single model but are 5x over the budget. Distillation moves that accuracy into one model under 5M: the student is trained on the averaged logits of the teacher ensemble, computed on the same augmented batch it sees. Teachers are our own models trained from scratch on the same data, as the rules allow.
+
+```bash
+R1="checkpoints/A_64-128-256_343_se.pt checkpoints/A_64-128-256_343_nose.pt checkpoints/B_64-128-256_353_se.pt checkpoints/C_80-160-320_232_se.pt checkpoints/D_96-192-320_222_se.pt"
+R2="checkpoints/C_ta.pt checkpoints/C_mix.pt checkpoints/C_ta_mix.pt checkpoints/C_ta_mix_noerase.pt checkpoints/A_nose_ta_mix.pt"
+C="--widths 80 160 320 --blocks 2 3 2"
+uv run python train.py $C --teacher $R1 --out checkpoints/C_kd5.pt
+uv run python train.py $C --autoaugment --mix 0.5 --erase-p 0 --teacher $R2 --out checkpoints/KD_C_aug.pt
+uv run python train.py --no-se --autoaugment --mix 0.5 --erase-p 0 --teacher $R2 --out checkpoints/KD_A_nose_aug.pt
+uv run python train.py $C --autoaugment --mix 0.5 --erase-p 0 --teacher $R2 --kd-temp 1 --kd-alpha 1.0 --out checkpoints/KD_C_aug_T1.pt
+```
+
+| run | augmentation | teacher | KD loss | params | final | best | TTA | same run without KD |
+|-----|--------------|---------|---------|--------|-------|------|-----|---------------------|
+| C | baseline | round 1 (97.06%) | T=4, alpha=0.9 | 4,836,010 | 96.13 | 96.13 | 96.33 | 96.18 |
+| C | both, no erasing | round 2 (97.50%) | T=4, alpha=0.9 | 4,836,010 | 97.22 | 97.28 | **97.31** | 96.93 |
+| A (no SE) | both, no erasing | round 2 (97.50%) | T=4, alpha=0.9 | 4,622,410 | **97.27** | **97.31** | 97.23 | 96.77 |
+| C | both, no erasing | round 2 (97.50%) | T=1, alpha=1.0 | 4,836,010 | 97.12 | 97.15 | 97.25 | 96.93 |
+
+![Round 3 training curves](assets/3-distillation.png)
+
+- With baseline augmentation, distillation gives nothing (96.13 vs. 96.18): its early lead disappears once the learning rate decays.
+- With strong augmentation and the stronger teacher it adds +0.2 to +0.5 pts, pushing a single sub-5M model past 97.2%. This matches "a good teacher is patient and consistent" (Beyer et al. 2022): distillation pays off when the teacher labels heavily augmented images.
+- Softened (T=4) vs. raw (T=1) teacher targets are within noise.
+- Flip TTA no longer helps the distilled students much: the teacher already averaged over many augmented views.
+- Kaggle public score of the distilled C: **0.889** (+0.5 over round 2).
 
 ## Kaggle notes
 
