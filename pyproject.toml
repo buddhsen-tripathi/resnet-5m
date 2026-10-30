@@ -1,5 +1,5 @@
 [project]
-name = "cnn-maxxxing"
+name = "resnet-5m"
 version = "0.1.0"
 description = "Parameter-efficient ResNet (<5M params) for CIFAR-10"
 requires-python = ">=3.10"

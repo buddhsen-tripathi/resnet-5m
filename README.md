@@ -1,4 +1,4 @@
-# cnn-maxxxing
+# resnet-5m
 
 A parameter-efficient ResNet for CIFAR-10, trained from scratch under a **5M trainable-parameter budget**.
 
