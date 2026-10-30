@@ -73,6 +73,36 @@ uv run python train.py --widths 96 192 320 --blocks 2 2 2 --out checkpoints/D_96
 - Flip TTA adds 0.15-0.4 pts to every model.
 - Kaggle public score of A (SE): **0.873**, about 8 pts below its CIFAR-10 test accuracy. Every team sees a similar drop, so the held-out set is a harder, shifted distribution.
 
+### Round 2: augmentation
+
+Same budget, stronger regularization: TrivialAugment (per-image), CutMix/MixUp (per-batch, half the batches), and whether random erasing is still useful on top.
+
+```bash
+C="--widths 80 160 320 --blocks 2 3 2"
+uv run python train.py $C --autoaugment --out checkpoints/C_ta.pt
+uv run python train.py $C --mix 0.5 --out checkpoints/C_mix.pt
+uv run python train.py $C --autoaugment --mix 0.5 --out checkpoints/C_ta_mix.pt
+uv run python train.py $C --autoaugment --mix 0.5 --erase-p 0 --out checkpoints/C_ta_mix_noerase.pt
+uv run python train.py --no-se --autoaugment --mix 0.5 --out checkpoints/A_nose_ta_mix.pt
+```
+
+| run | augmentation | params | final | best | TTA |
+|-----|--------------|--------|-------|------|-----|
+| C | baseline (round 1) | 4,836,010 | 96.18 | 96.26 | 96.36 |
+| C | + TrivialAugment | 4,836,010 | 96.76 | 96.86 | 96.84 |
+| C | + CutMix/MixUp | 4,836,010 | 96.68 | 96.73 | **97.01** |
+| C | + both | 4,836,010 | 96.84 | 96.88 | 96.98 |
+| C | + both, no erasing | 4,836,010 | **96.93** | **96.97** | 96.97 |
+| A (no SE) | + both | 4,622,410 | 96.77 | 96.83 | 97.00 |
+| ensemble of the 5 | | | | | 97.50 |
+
+![Round 2 training curves](assets/2-augmentation.png)
+
+- Every augmentation setting beats its baseline by 0.5-0.75 pts at the same 200 epochs; combining TrivialAugment with CutMix/MixUp is best.
+- Strong augmentation trains slower early (lower accuracy until ~epoch 150) and catches up once the learning rate decays.
+- Random erasing on top of both is neutral.
+- Kaggle public score of C + both, no erasing: **0.884** (+1.1 over round 1).
+
 ## Kaggle notes
 
 - The test set is 2,000 32x32 PNGs plus `test.csv` (`id,filename`); submissions are `id,label` with CIFAR-10 class indices.
