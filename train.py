@@ -6,6 +6,7 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms as T
 from torchvision.transforms import v2
@@ -27,6 +28,9 @@ def get_args():
     p.add_argument("--autoaugment", action="store_true", help="add TrivialAugmentWide")
     p.add_argument("--mix", type=float, default=0.0, help="probability of applying CutMix or MixUp to a batch")
     p.add_argument("--erase-p", type=float, default=0.5, help="RandomErasing (cutout) probability")
+    p.add_argument("--teacher", nargs="+", default=[], help="checkpoint(s) to distill from (logits are averaged)")
+    p.add_argument("--kd-alpha", type=float, default=0.9, help="weight of the distillation loss vs. the label loss")
+    p.add_argument("--kd-temp", type=float, default=4.0)
     p.add_argument("--compile", action="store_true")
     p.add_argument("--workers", type=int, default=8)
     p.add_argument("--seed", type=int, default=0)
@@ -91,6 +95,11 @@ def main():
     )
     criterion = nn.CrossEntropyLoss(label_smoothing=args.label_smoothing)
     mix = v2.RandomChoice([v2.CutMix(num_classes=10), v2.MixUp(num_classes=10)])
+    teachers = []
+    for path in args.teacher:
+        t = torch.load(path, map_location=device)
+        teachers.append(ResNet(**t["cfg"]).to(device, memory_format=torch.channels_last).eval())
+        teachers[-1].load_state_dict(t["model"])
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -111,7 +120,15 @@ def main():
                 x, y = mix(x, y)  # y becomes soft labels
             x = x.contiguous(memory_format=torch.channels_last)
             with torch.autocast(device.type, torch.bfloat16, enabled=amp):
-                loss = criterion(net(x), y)
+                logits = net(x)
+                loss = criterion(logits, y)
+                if teachers:
+                    # The teacher labels the exact same augmented batch the student sees.
+                    with torch.no_grad():
+                        target = torch.stack([t(x) for t in teachers]).float().mean(0)
+                    T = args.kd_temp
+                    kd = F.kl_div(F.log_softmax(logits.float() / T, 1), F.softmax(target / T, 1), reduction="batchmean")
+                    loss = args.kd_alpha * kd * T * T + (1 - args.kd_alpha) * loss
             opt.zero_grad(set_to_none=True)
             loss.backward()
             opt.step()

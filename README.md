@@ -9,7 +9,9 @@ Built for the [CIFAR-10 ResNet Architecture Challenge](https://www.kaggle.com/co
 ```bash
 uv sync
 uv run python train.py --out checkpoints/model.pt   # downloads CIFAR-10 to data/
-uv run python predict.py --checkpoint checkpoints/model.pt
+uv run python evaluate.py checkpoints/a.pt checkpoints/b.pt   # flip-TTA accuracy of each and of their ensemble
+uv run python train.py --teacher checkpoints/a.pt checkpoints/b.pt --out checkpoints/student.pt
+uv run python predict.py --checkpoint checkpoints/student.pt
 ```
 
 `predict.py` reads `data/kaggle/test.csv` and `data/kaggle/test_images/`, averages each image with its horizontal flip, and writes `submission.csv` (`id,label`). Checkpoints store the model config, so any run can be loaded without extra flags. `train.py --resume` continues from the `--out` checkpoint after an interruption.
@@ -37,6 +39,7 @@ Widths and blocks per stage are configurable (`--widths`, `--blocks`, `--no-se`)
 - SGD (momentum 0.9, Nesterov), lr 0.2, batch 256, 5-epoch linear warmup then cosine decay, 200 epochs
 - Weight decay 5e-4 (not on BN/bias), label smoothing 0.1
 - Augmentation: random crop (reflect pad 4), horizontal flip, random erasing (`--erase-p`); optional TrivialAugment (`--autoaugment`) and per-batch CutMix/MixUp (`--mix 0.5`)
+- Knowledge distillation (`--teacher ckpt [ckpt ...]`): the student matches the averaged logits of the teachers on the *same augmented batch* (KL at temperature `--kd-temp`, weighted by `--kd-alpha` against the label loss)
 - bf16 mixed precision and channels-last on CUDA; checkpoint written atomically every epoch
 
 The official 10k CIFAR-10 test split is used only to report accuracy, never for training or model selection inside a run.
