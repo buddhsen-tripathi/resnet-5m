@@ -45,13 +45,42 @@ class PreActBlock(nn.Module):
         return self.se(out) + skip
 
 
+class PreActBottleneck(nn.Module):
+    """Pre-activation bottleneck (He et al., 2016): 1x1 down, 3x3, 1x1 up, for more depth per parameter."""
+
+    def __init__(self, cin, cout, stride=1, se=True, reduction=4):
+        super().__init__()
+        mid = cout // reduction
+        self.bn1 = nn.BatchNorm2d(cin)
+        self.conv1 = nn.Conv2d(cin, mid, 1, bias=False)
+        self.bn2 = nn.BatchNorm2d(mid)
+        self.conv2 = nn.Conv2d(mid, mid, 3, stride, 1, bias=False)
+        self.bn3 = nn.BatchNorm2d(mid)
+        self.conv3 = nn.Conv2d(mid, cout, 1, bias=False)
+        self.se = SqueezeExcite(cout) if se else nn.Identity()
+        self.shortcut = None
+        if stride != 1 or cin != cout:
+            pool = [nn.AvgPool2d(stride)] if stride != 1 else []
+            self.shortcut = nn.Sequential(*pool, nn.Conv2d(cin, cout, 1, bias=False))
+
+    def forward(self, x):
+        out = F.relu(self.bn1(x))
+        skip = x if self.shortcut is None else self.shortcut(out)
+        out = self.conv2(F.relu(self.bn2(self.conv1(out))))
+        out = self.conv3(F.relu(self.bn3(out)))
+        return self.se(out) + skip
+
+
+BLOCKS = {"basic": PreActBlock, "bottleneck": PreActBottleneck}
+
+
 class ResNet(nn.Module):
     """CIFAR ResNet: 3x3 stem, then one stage per width; each stage after the first halves resolution.
 
     Takes images in [0, 1]; normalization is done inside the model so inference needs no extra preprocessing.
     """
 
-    def __init__(self, widths=(64, 128, 256), blocks=(3, 4, 3), se=True, num_classes=10):
+    def __init__(self, widths=(64, 128, 256), blocks=(3, 4, 3), se=True, num_classes=10, block="basic"):
         super().__init__()
         self.register_buffer("mean", torch.tensor(CIFAR_MEAN).view(1, 3, 1, 1))
         self.register_buffer("std", torch.tensor(CIFAR_STD).view(1, 3, 1, 1))
@@ -59,7 +88,7 @@ class ResNet(nn.Module):
         layers, cin = [], widths[0]
         for i, (w, n) in enumerate(zip(widths, blocks)):
             for j in range(n):
-                layers.append(PreActBlock(cin, w, stride=2 if i > 0 and j == 0 else 1, se=se))
+                layers.append(BLOCKS[block](cin, w, stride=2 if i > 0 and j == 0 else 1, se=se))
                 cin = w
         self.layers = nn.Sequential(*layers)
         self.bn = nn.BatchNorm2d(cin)
