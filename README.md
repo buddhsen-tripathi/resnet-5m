@@ -18,6 +18,24 @@ The best single model is a **4.84M-parameter pre-activation ResNet distilled fro
 
 What moved the needle, in order: stronger data augmentation (+0.5 to +0.75 pts), then knowledge distillation on top of it (+0.2 to +0.5 pts). Architecture choices within the budget mattered least (all within 0.5 pts).
 
+## Pretrained weights
+
+The best model ships with the repo, so it can be used right after cloning:
+
+```bash
+uv run python evaluate.py weights/KD_C_aug.pt          # 97.31% with flip TTA
+uv run python predict.py --checkpoint weights/KD_C_aug.pt
+```
+
+Weights for all 14 runs (~19 MB each) are attached to the [v0.1 release](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.1). File names match the run names in the experiment tables below:
+
+```bash
+gh release download v0.1 -D checkpoints                  # all runs
+gh release download v0.1 -p "C_*.pt" -D checkpoints      # a subset
+```
+
+They load in `predict.py`, `evaluate.py` and as distillation teachers (`--teacher`). They hold the weights and config only, not the optimizer state, so `--resume` cannot continue them; start a new run instead.
+
 ## Usage
 
 ```bash
