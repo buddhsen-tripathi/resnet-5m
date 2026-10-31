@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from PIL import Image
 
-from model import ResNet
+from model import ResNet, tta_logits
 
 
 @torch.no_grad()
@@ -15,6 +15,7 @@ def main():
     p.add_argument("--data-dir", default="data/kaggle", help="folder with test.csv and test_images/")
     p.add_argument("--checkpoint", default="checkpoints/model.pt")
     p.add_argument("--out", default="submission.csv")
+    p.add_argument("--shift", type=int, default=0, help="also average over translations of this many pixels")
     args = p.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
@@ -31,8 +32,7 @@ def main():
     preds = []
     for batch in x.split(1024):
         batch = batch.to(device)
-        logits = model(batch) + model(batch.flip(3))  # horizontal-flip TTA
-        preds += logits.argmax(1).tolist()
+        preds += tta_logits(model, batch, args.shift).argmax(1).tolist()
 
     with open(args.out, "w", newline="") as f:
         w = csv.writer(f)

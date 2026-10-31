@@ -47,7 +47,7 @@ uv run python train.py --teacher checkpoints/a.pt checkpoints/b.pt --out checkpo
 uv run python predict.py --checkpoint checkpoints/student.pt
 ```
 
-`predict.py` reads `data/kaggle/test.csv` and `data/kaggle/test_images/`, averages each image with its horizontal flip, and writes `submission.csv` (`id,label`). Checkpoints store the model config, so any run can be loaded without extra flags. `train.py --resume` continues from the `--out` checkpoint after an interruption.
+`predict.py` reads `data/kaggle/test.csv` and `data/kaggle/test_images/`, averages each image with its horizontal flip (`--shift 1` also averages over 1-pixel translations; `evaluate.py` takes the same flag), and writes `submission.csv` (`id,label`). Checkpoints store the model config, so any run can be loaded without extra flags. `train.py --resume` continues from the `--out` checkpoint after an interruption.
 
 ## Model
 
@@ -73,6 +73,7 @@ Widths, blocks per stage and block type are configurable (`--widths`, `--blocks`
 - Weight decay 5e-4 (not on BN/bias), label smoothing 0.1
 - Augmentation: random crop (reflect pad 4), horizontal flip, random erasing (`--erase-p`) or a 16x16 Cutout square (`--cutout`); optional TrivialAugment (`--autoaugment`) and per-batch CutMix/MixUp (`--mix 0.5`)
 - Knowledge distillation (`--teacher ckpt [ckpt ...]`): the student matches the averaged logits of the teachers on the *same augmented batch* (KL at temperature `--kd-temp`, weighted by `--kd-alpha` against the label loss); `--teacher-flip` also averages the teachers over the horizontal flip
+- Optional regularizers: stochastic depth (`--drop-path`), weight EMA (`--ema`, evaluates and saves the EMA model) and SAM (`--sam`, about twice the compute, not supported with float16 loss scaling)
 - bf16 mixed precision (float16 with loss scaling on GPUs without bf16) and channels-last on CUDA; checkpoint written atomically every epoch
 
 The official 10k CIFAR-10 test split is used only to report accuracy, never for training or model selection inside a run.
@@ -216,7 +217,7 @@ uv run python train.py $A --teacher $FULL --cutout --out checkpoints/KD5_full_cu
 - Both seven-teacher students beat the previous best of 0.889 on Kaggle.
 - Cutout lowers CIFAR-10 test accuracy by 0.24 pts but scores 0.003 higher on Kaggle, about 3 images on the public leaderboard. With one seed, that is too small to call either way.
 
-[`notebooks/round6_long.ipynb`](notebooks/round6_long.ipynb) is the next run: both seven-teacher recipes at 400 epochs, with S4 added as an eighth teacher.
+[`notebooks/round6_screen.ipynb`](notebooks/round6_screen.ipynb) is the next run. It keeps this recipe with Cutout, adds S4 and both KD5_full students as teachers, and screens stochastic depth with EMA, SAM, and all of them together.
 
 ## Kaggle notes
 
