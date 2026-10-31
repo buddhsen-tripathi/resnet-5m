@@ -6,28 +6,29 @@ Built for the [CIFAR-10 ResNet Architecture Challenge](https://www.kaggle.com/co
 
 ## Results
 
-![Final CIFAR-10 test accuracy of every run](assets/summary.png)
+![Final CIFAR-10 test accuracy of every run in rounds 1-3](assets/summary.png)
 
-The best single model is a **4.84M-parameter pre-activation ResNet distilled from an ensemble of five of our own models**:
+Our best Kaggle score comes from a **4,995,226-parameter pre-activation ResNet distilled from an ensemble of seven of our own models**. `KD5_full` and `KD5_full_cutout` differ only in Cutout:
 
-| | |
-|---|---|
-| CIFAR-10 test accuracy | **97.22%** (97.31% with flip TTA) |
-| Kaggle public leaderboard | **0.889** |
-| Trainable parameters | 4,836,010 |
+| run | CIFAR-10 test | flip TTA | Kaggle public |
+|-----|---------------|----------|---------------|
+| `KD5_full_cutout` | 97.25% | 97.28% | **0.896** |
+| `KD5_full` | **97.49%** | **97.60%** | 0.893 |
 
-What moved the needle, in order: stronger data augmentation (+0.5 to +0.75 pts), then knowledge distillation on top of it (+0.2 to +0.5 pts). Architecture choices within the budget mattered least (all within 0.5 pts).
+The 0.003 gap is about 3 images on the public leaderboard, so it does not show that Cutout helps.
+
+What moved the needle, in order: stronger data augmentation (+0.5 to +0.75 pts), then knowledge distillation on top of it (+0.2 to +0.5 pts). Round 5 showed that a larger teacher set also matters on Kaggle. Architecture choices within the budget mattered least (all within 0.5 pts), and from round 4 on, CIFAR-10 test accuracy stopped predicting the Kaggle score reliably.
 
 ## Pretrained weights
 
-The best model ships with the repo, so it can be used right after cloning:
+The best model from rounds 1-3 ships with the repo, so it can be used right after cloning:
 
 ```bash
 uv run python evaluate.py weights/KD_C_aug.pt          # 97.31% with flip TTA
 uv run python predict.py --checkpoint weights/KD_C_aug.pt
 ```
 
-Weights for all 14 runs (~19 MB each) are attached to the [v0.1 release](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.1). File names match the run names in the experiment tables below:
+Weights for all 14 runs from rounds 1-3 (~19 MB each) are attached to the [v0.1 release](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.1). File names match the run names in the experiment tables below:
 
 ```bash
 gh release download v0.1 -D checkpoints                  # all runs
@@ -78,7 +79,7 @@ The official 10k CIFAR-10 test split is used only to report accuracy, never for 
 
 ## Experiments
 
-All runs: 200 epochs, seed 0, one NVIDIA B300 (five runs in parallel, ~8 s/epoch each). Full per-epoch logs are in [`logs/`](logs). *Final* is the test accuracy after the last epoch, *best* the highest epoch, *TTA* the final model averaged with its horizontal flip (`evaluate.py`).
+Rounds 1-3: 200 epochs, seed 0, one NVIDIA B300 (five runs in parallel, ~8 s/epoch each), with full per-epoch logs in [`logs/`](logs). Rounds 4-5 ran on a Colab A100 from the self-contained notebooks in [`notebooks/`](notebooks); their per-epoch logs are not in the repo yet. *Final* is the test accuracy after the last epoch, *best* the highest epoch, *TTA* the final model averaged with its horizontal flip (`evaluate.py`).
 
 ### Round 1: architecture
 
@@ -166,6 +167,56 @@ uv run python train.py $C --autoaugment --mix 0.5 --erase-p 0 --teacher $R2 --kd
 - Softened (T=4) vs. raw (T=1) teacher targets are within noise.
 - Flip TTA no longer helps the distilled students much: the teacher already averaged over many augmented views.
 - Kaggle public score of the distilled C: **0.889** (+0.5 over round 2).
+
+### Round 4: architecture under strong augmentation
+
+Round 1 compared architectures with weak augmentation. This round repeats the search with TrivialAugment and CutMix/MixUp, including higher-resolution stages and bottleneck blocks. Five candidates were screened for 60 epochs ([`notebooks/round4_screening.ipynb`](notebooks/round4_screening.ipynb)), and the top two were confirmed for 200 ([`notebooks/round4_confirm.ipynb`](notebooks/round4_confirm.ipynb)).
+
+```bash
+A="--autoaugment --mix 0.5 --erase-p 0"
+uv run python train.py --widths 80 160 320 --blocks 2 3 2 $A --epochs 60 --out checkpoints/S0_C.pt
+uv run python train.py --widths 96 168 232 --blocks 3 3 3 $A --epochs 60 --out checkpoints/S1_mid.pt
+uv run python train.py --widths 128 192 232 --blocks 4 3 2 --no-se $A --out checkpoints/S2_highres.pt
+uv run python train.py --block bottleneck --widths 256 512 768 --blocks 5 5 3 $A --epochs 60 --out checkpoints/S3_bneck.pt
+uv run python train.py --block bottleneck --widths 256 448 640 --blocks 7 7 4 $A --out checkpoints/S4_deep.pt
+```
+
+| run | block | widths | blocks | SE | params | 60 epochs (final) | 60 epochs (best) | 200 epochs (final) | TTA | Kaggle |
+|-----|-------|--------|--------|----|--------|-------------------|------------------|--------------------|-----|--------|
+| S0_C | basic | 80-160-320 | 2-3-2 | yes | 4,836,010 | 95.39 | 95.50 | | | |
+| S1_mid | basic | 96-168-232 | 3-3-3 | yes | 4,786,532 | 95.64 | 95.67 | | | |
+| S2_highres | basic | 128-192-232 | 4-3-2 | no | 4,995,226 | **95.90** | **95.93** | **97.18** | **97.49** | 0.885 |
+| S3_bneck | bottleneck | 256-512-768 | 5-5-3 | yes | 4,529,290 | 95.42 | 95.46 | | | |
+| S4_deep | bottleneck | 256-448-640 | 7-7-4 | yes | 4,552,158 | 95.89 | 95.93 | 97.07 | 97.27 | **0.886** |
+
+- Without any teacher, S2 nearly matches the distilled C on CIFAR-10 test (97.18 vs. 97.22) and beats it with flip TTA (97.49 vs. 97.31).
+- Neither model beats the distilled C on Kaggle (0.889), so better CIFAR-10 accuracy did not carry over here.
+- Differences of a few thousandths are close to the noise of the public leaderboard, which scores only part of the 2,000 test images.
+
+### Round 5: distill into the S2 architecture
+
+S2 is the best architecture without KD, so it became the student. The teachers are now our own models from rounds 2-4, averaged over the horizontal flip (`--teacher-flip`). `KD5_pair` uses S2 and the distilled C, while the other two runs use seven teachers. The notebook is [`notebooks/round5_kd.ipynb`](notebooks/round5_kd.ipynb).
+
+```bash
+A="--widths 128 192 232 --blocks 4 3 2 --no-se --autoaugment --mix 0.5 --erase-p 0 --seed 1 --teacher-flip"
+PAIR="checkpoints/S2_highres.pt checkpoints/KD_C_aug.pt"
+FULL="$PAIR checkpoints/C_ta.pt checkpoints/C_mix.pt checkpoints/C_ta_mix.pt checkpoints/C_ta_mix_noerase.pt checkpoints/A_nose_ta_mix.pt"
+uv run python train.py $A --teacher $PAIR --out checkpoints/KD5_pair.pt
+uv run python train.py $A --teacher $FULL --out checkpoints/KD5_full.pt
+uv run python train.py $A --teacher $FULL --cutout --out checkpoints/KD5_full_cutout.pt
+```
+
+| run | teachers | Cutout | params | final | TTA | Kaggle |
+|-----|----------|--------|--------|-------|-----|--------|
+| KD5_pair | 2 | no | 4,995,226 | 97.31 | 97.49 | 0.887 |
+| KD5_full | 7 | no | 4,995,226 | **97.49** | **97.60** | 0.893 |
+| KD5_full_cutout | 7 | yes | 4,995,226 | 97.25 | 97.28 | **0.896** |
+
+- Seven teachers beat two on both measures: +0.18 pts on CIFAR-10 test and +0.006 on Kaggle.
+- Both seven-teacher students beat the previous best of 0.889 on Kaggle.
+- Cutout lowers CIFAR-10 test accuracy by 0.24 pts but scores 0.003 higher on Kaggle, about 3 images on the public leaderboard. With one seed, that is too small to call either way.
+
+[`notebooks/round6_long.ipynb`](notebooks/round6_long.ipynb) is the next run: both seven-teacher recipes at 400 epochs, with S4 added as an eighth teacher.
 
 ## Kaggle notes
 
