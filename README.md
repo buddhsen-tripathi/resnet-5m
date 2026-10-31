@@ -54,7 +54,7 @@ Widths and blocks per stage are configurable (`--widths`, `--blocks`, `--no-se`)
 - Weight decay 5e-4 (not on BN/bias), label smoothing 0.1
 - Augmentation: random crop (reflect pad 4), horizontal flip, random erasing (`--erase-p`); optional TrivialAugment (`--autoaugment`) and per-batch CutMix/MixUp (`--mix 0.5`)
 - Knowledge distillation (`--teacher ckpt [ckpt ...]`): the student matches the averaged logits of the teachers on the *same augmented batch* (KL at temperature `--kd-temp`, weighted by `--kd-alpha` against the label loss)
-- bf16 mixed precision and channels-last on CUDA; checkpoint written atomically every epoch
+- bf16 mixed precision (float16 with loss scaling on GPUs without bf16) and channels-last on CUDA; checkpoint written atomically every epoch
 
 The official 10k CIFAR-10 test split is used only to report accuracy, never for training or model selection inside a run.
 

@@ -56,12 +56,12 @@ def loaders(args):
 
 
 @torch.no_grad()
-def evaluate(model, loader, device, amp):
+def evaluate(model, loader, device, amp, amp_dtype):
     model.eval()
     correct = total = 0
     for x, y in loader:
         x, y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
-        with torch.autocast(device.type, torch.bfloat16, enabled=amp):
+        with torch.autocast(device.type, amp_dtype, enabled=amp):
             correct += (model(x).argmax(1) == y).sum().item()
         total += y.numel()
     return correct / total
@@ -72,6 +72,9 @@ def main():
     torch.manual_seed(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
     amp = device.type == "cuda"
+    # Older GPUs such as the V100 have no bf16; float16 needs loss scaling to avoid gradient underflow.
+    amp_dtype = torch.bfloat16 if amp and torch.cuda.is_bf16_supported() else torch.float16
+    scaler = torch.amp.GradScaler("cuda", enabled=amp and amp_dtype == torch.float16)
     torch.backends.cudnn.benchmark = True
 
     cfg = dict(widths=args.widths, blocks=args.blocks, se=args.se)
@@ -109,6 +112,8 @@ def main():
         model.load_state_dict(ckpt["model"])
         opt.load_state_dict(ckpt["opt"])
         sched.load_state_dict(ckpt["sched"])
+        if "scaler" in ckpt:
+            scaler.load_state_dict(ckpt["scaler"])
         start = ckpt["epoch"]
         print(f"resumed from {out} at epoch {start}")
     for epoch in range(start, args.epochs):
@@ -119,7 +124,7 @@ def main():
             if torch.rand(()) < args.mix:
                 x, y = mix(x, y)  # y becomes soft labels
             x = x.contiguous(memory_format=torch.channels_last)
-            with torch.autocast(device.type, torch.bfloat16, enabled=amp):
+            with torch.autocast(device.type, amp_dtype, enabled=amp):
                 logits = net(x)
                 loss = criterion(logits, y)
                 if teachers:
@@ -130,15 +135,16 @@ def main():
                     kd = F.kl_div(F.log_softmax(logits.float() / T, 1), F.softmax(target / T, 1), reduction="batchmean")
                     loss = args.kd_alpha * kd * T * T + (1 - args.kd_alpha) * loss
             opt.zero_grad(set_to_none=True)
-            loss.backward()
-            opt.step()
+            scaler.scale(loss).backward()
+            scaler.step(opt)
+            scaler.update()
             sched.step()
             loss_sum += loss.detach()
-        acc = evaluate(net, test_loader, device, amp)
+        acc = evaluate(net, test_loader, device, amp, amp_dtype)
         print(f"epoch {epoch + 1}/{args.epochs}  loss {loss_sum.item() / len(train_loader):.4f}  "
               f"test_acc {acc:.4f}  lr {sched.get_last_lr()[0]:.4f}  {time.time() - t0:.1f}s", flush=True)
         state = {"model": model.state_dict(), "cfg": cfg, "opt": opt.state_dict(), "sched": sched.state_dict(),
-                 "epoch": epoch + 1, "test_acc": acc}
+                 "scaler": scaler.state_dict(), "epoch": epoch + 1, "test_acc": acc}
         torch.save(state, out.with_suffix(".tmp"))
         os.replace(out.with_suffix(".tmp"), out)  # atomic, so preemption mid-save can't corrupt the checkpoint
     print(f"saved {out}")
