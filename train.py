@@ -29,7 +29,9 @@ def get_args():
     p.add_argument("--autoaugment", action="store_true", help="add TrivialAugmentWide")
     p.add_argument("--mix", type=float, default=0.0, help="probability of applying CutMix or MixUp to a batch")
     p.add_argument("--erase-p", type=float, default=0.5, help="RandomErasing (cutout) probability")
+    p.add_argument("--cutout", action="store_true", help="erase a 16x16 square from every image (overrides --erase-p)")
     p.add_argument("--teacher", nargs="+", default=[], help="checkpoint(s) to distill from (logits are averaged)")
+    p.add_argument("--teacher-flip", action="store_true", help="also average teacher logits over the horizontal flip")
     p.add_argument("--kd-alpha", type=float, default=0.9, help="weight of the distillation loss vs. the label loss")
     p.add_argument("--kd-temp", type=float, default=4.0)
     p.add_argument("--compile", action="store_true")
@@ -45,7 +47,8 @@ def loaders(args):
     aug = [T.RandomCrop(32, padding=4, padding_mode="reflect"), T.RandomHorizontalFlip()]
     if args.autoaugment:
         aug.append(T.TrivialAugmentWide())
-    aug += [T.ToTensor(), T.RandomErasing(p=args.erase_p, scale=(0.02, 0.2), value=0.5)]
+    erase = dict(p=1.0, scale=(0.25, 0.25), ratio=(1, 1)) if args.cutout else dict(p=args.erase_p, scale=(0.02, 0.2))
+    aug += [T.ToTensor(), T.RandomErasing(value=0.5, **erase)]
     train = datasets.CIFAR10(args.data_dir, train=True, download=True, transform=T.Compose(aug))
     # The official CIFAR-10 test split is used only to monitor generalization, never for training.
     test = datasets.CIFAR10(args.data_dir, train=False, download=True, transform=T.ToTensor())
@@ -132,6 +135,8 @@ def main():
                     # The teacher labels the exact same augmented batch the student sees.
                     with torch.no_grad():
                         target = torch.stack([t(x) for t in teachers]).float().mean(0)
+                        if args.teacher_flip:
+                            target = (target + torch.stack([t(x.flip(3)) for t in teachers]).float().mean(0)) / 2
                     T = args.kd_temp
                     kd = F.kl_div(F.log_softmax(logits.float() / T, 1), F.softmax(target / T, 1), reduction="batchmean")
                     loss = args.kd_alpha * kd * T * T + (1 - args.kd_alpha) * loss

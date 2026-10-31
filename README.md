@@ -70,8 +70,8 @@ Widths, blocks per stage and block type are configurable (`--widths`, `--blocks`
 
 - SGD (momentum 0.9, Nesterov), lr 0.2, batch 256, 5-epoch linear warmup then cosine decay, 200 epochs
 - Weight decay 5e-4 (not on BN/bias), label smoothing 0.1
-- Augmentation: random crop (reflect pad 4), horizontal flip, random erasing (`--erase-p`); optional TrivialAugment (`--autoaugment`) and per-batch CutMix/MixUp (`--mix 0.5`)
-- Knowledge distillation (`--teacher ckpt [ckpt ...]`): the student matches the averaged logits of the teachers on the *same augmented batch* (KL at temperature `--kd-temp`, weighted by `--kd-alpha` against the label loss)
+- Augmentation: random crop (reflect pad 4), horizontal flip, random erasing (`--erase-p`) or a 16x16 Cutout square (`--cutout`); optional TrivialAugment (`--autoaugment`) and per-batch CutMix/MixUp (`--mix 0.5`)
+- Knowledge distillation (`--teacher ckpt [ckpt ...]`): the student matches the averaged logits of the teachers on the *same augmented batch* (KL at temperature `--kd-temp`, weighted by `--kd-alpha` against the label loss); `--teacher-flip` also averages the teachers over the horizontal flip
 - bf16 mixed precision (float16 with loss scaling on GPUs without bf16) and channels-last on CUDA; checkpoint written atomically every epoch
 
 The official 10k CIFAR-10 test split is used only to report accuracy, never for training or model selection inside a run.
