@@ -57,7 +57,7 @@ A pre-activation ResNet with squeeze-and-excitation (SE) and ResNet-D shortcuts:
 - **ResNet-D downsampling shortcut** (2x2 avg-pool then 1x1 conv, He et al. 2019): a strided 1x1 conv would discard 3/4 of the activations.
 - 3x3 stem, final BN-ReLU, global average pooling, linear classifier. Kaiming init. Input normalization lives inside the model.
 
-Widths and blocks per stage are configurable (`--widths`, `--blocks`, `--no-se`); each stage after the first halves the resolution (32 -> 16 -> 8). `train.py` refuses any configuration over 5M parameters.
+Widths, blocks per stage and block type are configurable (`--widths`, `--blocks`, `--no-se`, `--block bottleneck`); each stage after the first halves the resolution (32 -> 16 -> 8). `train.py` refuses any configuration over 5M parameters.
 
 | config | widths | blocks | params (with SE) | GMACs |
 |--------|--------|--------|------------------|-------|

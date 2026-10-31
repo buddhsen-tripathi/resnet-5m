@@ -11,13 +11,14 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms as T
 from torchvision.transforms import v2
 
-from model import MAX_PARAMS, ResNet, count_params
+from model import BLOCKS, MAX_PARAMS, ResNet, count_params
 
 
 def get_args():
     p = argparse.ArgumentParser(description="Train a <5M-param ResNet on CIFAR-10")
     p.add_argument("--widths", type=int, nargs="+", default=[64, 128, 256])
     p.add_argument("--blocks", type=int, nargs="+", default=[3, 4, 3])
+    p.add_argument("--block", choices=BLOCKS, default="basic", help="residual block type")
     p.add_argument("--se", action=argparse.BooleanOptionalAction, default=True, help="squeeze-and-excitation")
     p.add_argument("--epochs", type=int, default=200)
     p.add_argument("--batch-size", type=int, default=256)
@@ -77,7 +78,7 @@ def main():
     scaler = torch.amp.GradScaler("cuda", enabled=amp and amp_dtype == torch.float16)
     torch.backends.cudnn.benchmark = True
 
-    cfg = dict(widths=args.widths, blocks=args.blocks, se=args.se)
+    cfg = dict(widths=args.widths, blocks=args.blocks, se=args.se, block=args.block)
     model = ResNet(**cfg).to(device, memory_format=torch.channels_last)
     n_params = count_params(model)
     print(f"params: {n_params:,}")
