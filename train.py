@@ -30,6 +30,7 @@ def get_args():
     p.add_argument("--mix", type=float, default=0.0, help="probability of applying CutMix or MixUp to a batch")
     p.add_argument("--erase-p", type=float, default=0.5, help="RandomErasing (cutout) probability")
     p.add_argument("--cutout", action="store_true", help="erase a 16x16 square from every image (overrides --erase-p)")
+    p.add_argument("--zoom", type=float, nargs=2, metavar=("MIN", "MAX"), help="random scale range, at least 0.5")
     p.add_argument("--drop-path", type=float, default=0.0, help="stochastic depth rate of the last block")
     p.add_argument("--ema", type=float, default=0.0, help="weight EMA decay per step; evaluates and saves the EMA model")
     p.add_argument("--sam", type=float, default=0.0, help="SAM neighborhood size rho (about 2x the compute)")
@@ -48,6 +49,10 @@ def get_args():
 
 def loaders(args):
     aug = [T.RandomCrop(32, padding=4, padding_mode="reflect"), T.RandomHorizontalFlip()]
+    if args.zoom:
+        # Reflect padding first, so zooming out never shows empty borders.
+        scale = T.RandomAffine(0, scale=args.zoom, interpolation=T.InterpolationMode.BILINEAR)
+        aug = [T.Pad(16, padding_mode="reflect"), scale, T.CenterCrop(32)] + aug
     if args.autoaugment:
         aug.append(T.TrivialAugmentWide())
     erase = dict(p=1.0, scale=(0.25, 0.25), ratio=(1, 1)) if args.cutout else dict(p=args.erase_p, scale=(0.02, 0.2))

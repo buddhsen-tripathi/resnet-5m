@@ -16,6 +16,7 @@ def main():
     p.add_argument("--checkpoint", default="checkpoints/model.pt")
     p.add_argument("--out", default="submission.csv")
     p.add_argument("--shift", type=int, default=0, help="also average over translations of this many pixels")
+    p.add_argument("--zoom", type=float, nargs="*", default=[], help="also average over these scale factors")
     args = p.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
@@ -32,7 +33,7 @@ def main():
     preds = []
     for batch in x.split(1024):
         batch = batch.to(device)
-        preds += tta_logits(model, batch, args.shift).argmax(1).tolist()
+        preds += tta_logits(model, batch, args.shift, args.zoom).argmax(1).tolist()
 
     with open(args.out, "w", newline="") as f:
         w = csv.writer(f)

@@ -108,16 +108,27 @@ class ResNet(nn.Module):
         return self.fc(torch.flatten(F.adaptive_avg_pool2d(x, 1), 1))
 
 
-def tta_logits(model, x, shift=0):
-    """Average logits over the horizontal flip and, if shift > 0, translations of `shift` pixels in each direction."""
+def zoom_view(x, factor):
+    """Rescale around the center, keeping the image size: crops when zooming in, reflect-pads when zooming out."""
+    size = x.size(-1)
+    new = round(size * factor)
+    x = F.interpolate(x, size=new, mode="bilinear", align_corners=False, antialias=factor < 1)
+    if new >= size:
+        start = (new - size) // 2
+        return x[..., start:start + size, start:start + size]
+    before = (size - new) // 2
+    after = size - new - before
+    return F.pad(x, (before, after, before, after), "reflect")
+
+
+def tta_logits(model, x, shift=0, zooms=()):
+    """Average logits over the horizontal flip, translations of `shift` pixels and the `zooms` scale factors."""
     size = x.size(-1)
     padded = F.pad(x, (shift,) * 4, "reflect")
     offsets = [(0, 0)] + ([(shift, 0), (-shift, 0), (0, shift), (0, -shift)] if shift else [])
-    out = 0
-    for dx, dy in offsets:
-        view = padded[..., shift + dy:shift + dy + size, shift + dx:shift + dx + size]
-        out = out + model(view) + model(view.flip(3))
-    return out / (2 * len(offsets))
+    views = [padded[..., shift + dy:shift + dy + size, shift + dx:shift + dx + size] for dx, dy in offsets]
+    views += [zoom_view(x, z) for z in zooms]
+    return sum(model(v) + model(v.flip(3)) for v in views) / (2 * len(views))
 
 
 def count_params(model):
