@@ -8,16 +8,17 @@ Built for the [CIFAR-10 ResNet Architecture Challenge](https://www.kaggle.com/co
 
 ![Final CIFAR-10 test accuracy of every run in rounds 1-3](assets/summary.png)
 
-Our best Kaggle score comes from a **4,995,226-parameter pre-activation ResNet distilled from an ensemble of seven of our own models**. `KD5_full` and `KD5_full_cutout` differ only in Cutout:
+Our best Kaggle score comes from a **4,995,226-parameter pre-activation ResNet distilled from an ensemble of ten of our own models**. `KD5_full` has the best CIFAR-10 accuracy:
 
 | run | CIFAR-10 test | flip TTA | Kaggle public |
 |-----|---------------|----------|---------------|
-| `KD5_full_cutout` | 97.25% | 97.28% | **0.896** |
+| `R6_base` | 97.25% | 97.26% | **0.898** |
+| `KD5_full_cutout` | 97.25% | 97.28% | 0.896 |
 | `KD5_full` | **97.49%** | **97.60%** | 0.893 |
 
-The 0.003 gap is about 3 images on the public leaderboard, so it does not show that Cutout helps.
+Gaps this small are a few images on the public leaderboard.
 
-What moved the needle, in order: stronger data augmentation (+0.5 to +0.75 pts), then knowledge distillation on top of it (+0.2 to +0.5 pts). Round 5 showed that a larger teacher set also matters on Kaggle. Architecture choices within the budget mattered least (all within 0.5 pts), and from round 4 on, CIFAR-10 test accuracy stopped predicting the Kaggle score reliably.
+What moved the needle, in order: stronger data augmentation (+0.5 to +0.75 pts), then knowledge distillation on top of it (+0.2 to +0.5 pts). Round 5 showed that a larger teacher set also matters on Kaggle, while round 6 showed that adding stochastic depth, EMA and SAM to this recipe hurts. Architecture choices within the budget mattered least (all within 0.5 pts), and from round 4 on, CIFAR-10 test accuracy stopped predicting the Kaggle score reliably.
 
 ## Pretrained weights
 
@@ -80,7 +81,7 @@ The official 10k CIFAR-10 test split is used only to report accuracy, never for 
 
 ## Experiments
 
-Rounds 1-3: 200 epochs, seed 0, one NVIDIA B300 (five runs in parallel, ~8 s/epoch each), with full per-epoch logs in [`logs/`](logs). Rounds 4-5 ran on a Colab A100 from the self-contained notebooks in [`notebooks/`](notebooks); their per-epoch logs are not in the repo yet. *Final* is the test accuracy after the last epoch, *best* the highest epoch, *TTA* the final model averaged with its horizontal flip (`evaluate.py`).
+Rounds 1-3: 200 epochs, seed 0, one NVIDIA B300 (five runs in parallel, ~8 s/epoch each), with full per-epoch logs in [`logs/`](logs). Rounds 4-6 ran on a Colab A100 from the self-contained notebooks in [`notebooks/`](notebooks); their per-epoch logs are not in the repo yet. *Final* is the test accuracy after the last epoch, *best* the highest epoch, *TTA* the final model averaged with its horizontal flip (`evaluate.py`).
 
 ### Round 1: architecture
 
@@ -217,7 +218,31 @@ uv run python train.py $A --teacher $FULL --cutout --out checkpoints/KD5_full_cu
 - Both seven-teacher students beat the previous best of 0.889 on Kaggle.
 - Cutout lowers CIFAR-10 test accuracy by 0.24 pts but scores 0.003 higher on Kaggle, about 3 images on the public leaderboard. With one seed, that is too small to call either way.
 
-[`notebooks/round6_screen.ipynb`](notebooks/round6_screen.ipynb) is the next run. It keeps this recipe with Cutout, adds S4 and both KD5_full students as teachers, and screens stochastic depth with EMA, SAM, and all of them together.
+### Round 6: regularization screen
+
+Ten teachers (the seven from round 5, plus S4, KD5_full and KD5_full_cutout), with Cutout on every run. The notebook is [`notebooks/round6_screen.ipynb`](notebooks/round6_screen.ipynb).
+
+```bash
+A="--widths 128 192 232 --blocks 4 3 2 --no-se --autoaugment --mix 0.5 --erase-p 0 --cutout --seed 1 --teacher-flip"
+TEACHERS="$FULL checkpoints/S4_deep.pt checkpoints/KD5_full.pt checkpoints/KD5_full_cutout.pt"
+uv run python train.py $A --teacher $TEACHERS --out checkpoints/R6_base.pt
+uv run python train.py $A --teacher $TEACHERS --drop-path 0.1 --ema 0.9995 --out checkpoints/R6_sd_ema.pt
+uv run python train.py $A --teacher $TEACHERS --sam 0.05 --out checkpoints/R6_sam.pt
+uv run python train.py $A --teacher $TEACHERS --drop-path 0.1 --ema 0.9995 --sam 0.05 --out checkpoints/R6_all.pt
+```
+
+| run | added | params | final | best | TTA | Kaggle |
+|-----|-------|--------|-------|------|-----|--------|
+| R6_base | none | 4,995,226 | **97.25** | **97.27** | **97.26** | **0.898** |
+| R6_sam | SAM | 4,995,226 | 97.07 | 97.17 | 97.04 | 0.891 |
+| R6_sd_ema | stochastic depth, EMA | 4,995,226 | 97.03 | 97.03 | 97.03 | 0.887 |
+| R6_all | all three | 4,995,226 | 96.83 | 96.86 | 96.90 | 0.883 |
+
+- Every added regularizer lowered both CIFAR-10 accuracy and the Kaggle score, and stacking them was worst. On top of distillation and heavy augmentation, they appear to over-regularize at 200 epochs.
+- R6_base scores +0.002 over KD5_full_cutout on Kaggle at identical final accuracy (97.25), which is within leaderboard noise.
+- Flip plus 1-pixel shift TTA left KD5_full_cutout at 0.896.
+
+[`notebooks/round7_long.ipynb`](notebooks/round7_long.ipynb) is the next run: the R6_base recipe at 400 epochs.
 
 ## Kaggle notes
 
