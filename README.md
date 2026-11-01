@@ -48,7 +48,7 @@ uv run python train.py --teacher checkpoints/a.pt checkpoints/b.pt --out checkpo
 uv run python predict.py --checkpoint checkpoints/student.pt
 ```
 
-`predict.py` reads `data/kaggle/test.csv` and `data/kaggle/test_images/`, averages each image with its horizontal flip (`--shift 1` also averages over 1-pixel translations; `evaluate.py` takes the same flag), and writes `submission.csv` (`id,label`). Checkpoints store the model config, so any run can be loaded without extra flags. `train.py --resume` continues from the `--out` checkpoint after an interruption.
+`predict.py` reads `data/kaggle/test.csv` and `data/kaggle/test_images/`, averages each image with its horizontal flip (`--shift 1` also averages over 1-pixel translations and `--zoom 0.8 1.25` over scale factors; `evaluate.py` takes the same flags), and writes `submission.csv` (`id,label`). Checkpoints store the model config, so any run can be loaded without extra flags. `train.py --resume` continues from the `--out` checkpoint after an interruption.
 
 ## Model
 
@@ -72,7 +72,7 @@ Widths, blocks per stage and block type are configurable (`--widths`, `--blocks`
 
 - SGD (momentum 0.9, Nesterov), lr 0.2, batch 256, 5-epoch linear warmup then cosine decay, 200 epochs
 - Weight decay 5e-4 (not on BN/bias), label smoothing 0.1
-- Augmentation: random crop (reflect pad 4), horizontal flip, random erasing (`--erase-p`) or a 16x16 Cutout square (`--cutout`); optional TrivialAugment (`--autoaugment`) and per-batch CutMix/MixUp (`--mix 0.5`)
+- Augmentation: random crop (reflect pad 4), horizontal flip, optional random zoom (`--zoom MIN MAX`), random erasing (`--erase-p`) or a 16x16 Cutout square (`--cutout`); optional TrivialAugment (`--autoaugment`) and per-batch CutMix/MixUp (`--mix 0.5`)
 - Knowledge distillation (`--teacher ckpt [ckpt ...]`): the student matches the averaged logits of the teachers on the *same augmented batch* (KL at temperature `--kd-temp`, weighted by `--kd-alpha` against the label loss); `--teacher-flip` also averages the teachers over the horizontal flip
 - Optional regularizers: stochastic depth (`--drop-path`), weight EMA (`--ema`, evaluates and saves the EMA model) and SAM (`--sam`, about twice the compute, not supported with float16 loss scaling)
 - bf16 mixed precision (float16 with loss scaling on GPUs without bf16) and channels-last on CUDA; checkpoint written atomically every epoch
@@ -242,7 +242,7 @@ uv run python train.py $A --teacher $TEACHERS --drop-path 0.1 --ema 0.9995 --sam
 - R6_base scores +0.002 over KD5_full_cutout on Kaggle at identical final accuracy (97.25), which is within leaderboard noise.
 - Flip plus 1-pixel shift TTA left KD5_full_cutout at 0.896.
 
-[`notebooks/round7_long.ipynb`](notebooks/round7_long.ipynb) is the next run: the R6_base recipe at 400 epochs.
+Many of the hidden images our models are least sure about show tiny objects, close-ups or unusual scenes, so [`notebooks/round7_zoom.ipynb`](notebooks/round7_zoom.ipynb) adds random zoom to this recipe, mild and strong, plus a softer KD weight.
 
 ## Kaggle notes
 
