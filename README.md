@@ -22,18 +22,21 @@ What moved the needle, in order: stronger data augmentation (+0.5 to +0.75 pts),
 
 ## Pretrained weights
 
-The best model from rounds 1-3 ships with the repo, so it can be used right after cloning:
+The model with our best Kaggle score ships with the repo, so it can be used right after cloning:
 
 ```bash
-uv run python evaluate.py weights/KD_C_aug.pt          # 97.31% with flip TTA
-uv run python predict.py --checkpoint weights/KD_C_aug.pt
+uv run python evaluate.py weights/R6_base.pt           # 97.26% with flip TTA
+uv run python predict.py --checkpoint weights/R6_base.pt
 ```
 
-Weights for all 14 runs from rounds 1-3 (~19 MB each) are attached to the [v0.1 release](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.1). File names match the run names in the experiment tables below:
+`weights/KD_C_aug.pt`, the best model from rounds 1-3, is still there too.
+
+Weights are attached to two releases, and file names match the run names in the experiment tables below. The [v0.1 release](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.1) holds all 14 runs from rounds 1-3 (~19 MB each), and the [v0.2 release](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.2) holds 12 runs from rounds 4-7 (~20 MB each). The 60-epoch screening runs S0_C, S1_mid and S3_bneck are not included:
 
 ```bash
-gh release download v0.1 -D checkpoints                  # all runs
-gh release download v0.1 -p "C_*.pt" -D checkpoints      # a subset
+gh release download v0.1 -D checkpoints                  # all runs from rounds 1-3
+gh release download v0.2 -D checkpoints                  # runs from rounds 4-7
+gh release download v0.2 -p "R6_*.pt" -D checkpoints     # a subset
 ```
 
 They load in `predict.py`, `evaluate.py` and as distillation teachers (`--teacher`). They hold the weights and config only, not the optimizer state, so `--resume` cannot continue them; start a new run instead.
