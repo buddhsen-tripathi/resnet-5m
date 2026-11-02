@@ -6,28 +6,30 @@ Built for the [CIFAR-10 ResNet Architecture Challenge](https://www.kaggle.com/co
 
 ## Results
 
-![Final CIFAR-10 test accuracy of every run](assets/summary.png)
+![Final CIFAR-10 test accuracy of every run in rounds 1-3](assets/summary.png)
 
-The best single model is a **4.84M-parameter pre-activation ResNet distilled from an ensemble of five of our own models**:
+Our best Kaggle score comes from a **4,995,226-parameter pre-activation ResNet distilled from an ensemble of ten of our own models**. `KD5_full` has the best CIFAR-10 accuracy:
 
-| | |
-|---|---|
-| CIFAR-10 test accuracy | **97.22%** (97.31% with flip TTA) |
-| Kaggle public leaderboard | **0.889** |
-| Trainable parameters | 4,836,010 |
+| run | CIFAR-10 test | flip TTA | Kaggle public |
+|-----|---------------|----------|---------------|
+| `R6_base` | 97.25% | 97.26% | **0.898** |
+| `KD5_full_cutout` | 97.25% | 97.28% | 0.896 |
+| `KD5_full` | **97.49%** | **97.60%** | 0.893 |
 
-What moved the needle, in order: stronger data augmentation (+0.5 to +0.75 pts), then knowledge distillation on top of it (+0.2 to +0.5 pts). Architecture choices within the budget mattered least (all within 0.5 pts).
+Gaps this small are a few images on the public leaderboard.
+
+What moved the needle, in order: stronger data augmentation (+0.5 to +0.75 pts), then knowledge distillation on top of it (+0.2 to +0.5 pts). Round 5 showed that a larger teacher set also matters on Kaggle, while round 6 showed that adding stochastic depth, EMA and SAM to this recipe hurts. Architecture choices within the budget mattered least (all within 0.5 pts), and from round 4 on, CIFAR-10 test accuracy stopped predicting the Kaggle score reliably.
 
 ## Pretrained weights
 
-The best model ships with the repo, so it can be used right after cloning:
+The best model from rounds 1-3 ships with the repo, so it can be used right after cloning:
 
 ```bash
 uv run python evaluate.py weights/KD_C_aug.pt          # 97.31% with flip TTA
 uv run python predict.py --checkpoint weights/KD_C_aug.pt
 ```
 
-Weights for all 14 runs (~19 MB each) are attached to the [v0.1 release](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.1). File names match the run names in the experiment tables below:
+Weights for all 14 runs from rounds 1-3 (~19 MB each) are attached to the [v0.1 release](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.1). File names match the run names in the experiment tables below:
 
 ```bash
 gh release download v0.1 -D checkpoints                  # all runs
@@ -46,7 +48,7 @@ uv run python train.py --teacher checkpoints/a.pt checkpoints/b.pt --out checkpo
 uv run python predict.py --checkpoint checkpoints/student.pt
 ```
 
-`predict.py` reads `data/kaggle/test.csv` and `data/kaggle/test_images/`, averages each image with its horizontal flip, and writes `submission.csv` (`id,label`). Checkpoints store the model config, so any run can be loaded without extra flags. `train.py --resume` continues from the `--out` checkpoint after an interruption.
+`predict.py` reads `data/kaggle/test.csv` and `data/kaggle/test_images/`, averages each image with its horizontal flip (`--shift 1` also averages over 1-pixel translations and `--zoom 0.8 1.25` over scale factors; `evaluate.py` takes the same flags), and writes `submission.csv` (`id,label`). Checkpoints store the model config, so any run can be loaded without extra flags. `train.py --resume` continues from the `--out` checkpoint after an interruption.
 
 ## Model
 
@@ -57,7 +59,7 @@ A pre-activation ResNet with squeeze-and-excitation (SE) and ResNet-D shortcuts:
 - **ResNet-D downsampling shortcut** (2x2 avg-pool then 1x1 conv, He et al. 2019): a strided 1x1 conv would discard 3/4 of the activations.
 - 3x3 stem, final BN-ReLU, global average pooling, linear classifier. Kaiming init. Input normalization lives inside the model.
 
-Widths and blocks per stage are configurable (`--widths`, `--blocks`, `--no-se`); each stage after the first halves the resolution (32 -> 16 -> 8). `train.py` refuses any configuration over 5M parameters.
+Widths, blocks per stage and block type are configurable (`--widths`, `--blocks`, `--no-se`, `--block bottleneck`); each stage after the first halves the resolution (32 -> 16 -> 8). `train.py` refuses any configuration over 5M parameters.
 
 | config | widths | blocks | params (with SE) | GMACs |
 |--------|--------|--------|------------------|-------|
@@ -70,15 +72,16 @@ Widths and blocks per stage are configurable (`--widths`, `--blocks`, `--no-se`)
 
 - SGD (momentum 0.9, Nesterov), lr 0.2, batch 256, 5-epoch linear warmup then cosine decay, 200 epochs
 - Weight decay 5e-4 (not on BN/bias), label smoothing 0.1
-- Augmentation: random crop (reflect pad 4), horizontal flip, random erasing (`--erase-p`); optional TrivialAugment (`--autoaugment`) and per-batch CutMix/MixUp (`--mix 0.5`)
-- Knowledge distillation (`--teacher ckpt [ckpt ...]`): the student matches the averaged logits of the teachers on the *same augmented batch* (KL at temperature `--kd-temp`, weighted by `--kd-alpha` against the label loss)
-- bf16 mixed precision and channels-last on CUDA; checkpoint written atomically every epoch
+- Augmentation: random crop (reflect pad 4), horizontal flip, optional random zoom (`--zoom MIN MAX`), random erasing (`--erase-p`) or a 16x16 Cutout square (`--cutout`); optional TrivialAugment (`--autoaugment`) and per-batch CutMix/MixUp (`--mix 0.5`)
+- Knowledge distillation (`--teacher ckpt [ckpt ...]`): the student matches the averaged logits of the teachers on the *same augmented batch* (KL at temperature `--kd-temp`, weighted by `--kd-alpha` against the label loss); `--teacher-flip` also averages the teachers over the horizontal flip
+- Optional regularizers: stochastic depth (`--drop-path`), weight EMA (`--ema`, evaluates and saves the EMA model) and SAM (`--sam`, about twice the compute, not supported with float16 loss scaling)
+- bf16 mixed precision (float16 with loss scaling on GPUs without bf16) and channels-last on CUDA; checkpoint written atomically every epoch
 
 The official 10k CIFAR-10 test split is used only to report accuracy, never for training or model selection inside a run.
 
 ## Experiments
 
-All runs: 200 epochs, seed 0, one NVIDIA B300 (five runs in parallel, ~8 s/epoch each). Full per-epoch logs are in [`logs/`](logs). *Final* is the test accuracy after the last epoch, *best* the highest epoch, *TTA* the final model averaged with its horizontal flip (`evaluate.py`).
+Rounds 1-3: 200 epochs, seed 0, one NVIDIA B300 (five runs in parallel, ~8 s/epoch each), with full per-epoch logs in [`logs/`](logs). Rounds 4-6 ran on a Colab A100 from the self-contained notebooks in [`notebooks/`](notebooks); their per-epoch logs are not in the repo yet. *Final* is the test accuracy after the last epoch, *best* the highest epoch, *TTA* the final model averaged with its horizontal flip (`evaluate.py`).
 
 ### Round 1: architecture
 
@@ -166,6 +169,101 @@ uv run python train.py $C --autoaugment --mix 0.5 --erase-p 0 --teacher $R2 --kd
 - Softened (T=4) vs. raw (T=1) teacher targets are within noise.
 - Flip TTA no longer helps the distilled students much: the teacher already averaged over many augmented views.
 - Kaggle public score of the distilled C: **0.889** (+0.5 over round 2).
+
+### Round 4: architecture under strong augmentation
+
+Round 1 compared architectures with weak augmentation. This round repeats the search with TrivialAugment and CutMix/MixUp, including higher-resolution stages and bottleneck blocks. Five candidates were screened for 60 epochs ([`notebooks/round4_screening.ipynb`](notebooks/round4_screening.ipynb)), and the top two were confirmed for 200 ([`notebooks/round4_confirm.ipynb`](notebooks/round4_confirm.ipynb)).
+
+```bash
+A="--autoaugment --mix 0.5 --erase-p 0"
+uv run python train.py --widths 80 160 320 --blocks 2 3 2 $A --epochs 60 --out checkpoints/S0_C.pt
+uv run python train.py --widths 96 168 232 --blocks 3 3 3 $A --epochs 60 --out checkpoints/S1_mid.pt
+uv run python train.py --widths 128 192 232 --blocks 4 3 2 --no-se $A --out checkpoints/S2_highres.pt
+uv run python train.py --block bottleneck --widths 256 512 768 --blocks 5 5 3 $A --epochs 60 --out checkpoints/S3_bneck.pt
+uv run python train.py --block bottleneck --widths 256 448 640 --blocks 7 7 4 $A --out checkpoints/S4_deep.pt
+```
+
+| run | block | widths | blocks | SE | params | 60 epochs (final) | 60 epochs (best) | 200 epochs (final) | TTA | Kaggle |
+|-----|-------|--------|--------|----|--------|-------------------|------------------|--------------------|-----|--------|
+| S0_C | basic | 80-160-320 | 2-3-2 | yes | 4,836,010 | 95.39 | 95.50 | | | |
+| S1_mid | basic | 96-168-232 | 3-3-3 | yes | 4,786,532 | 95.64 | 95.67 | | | |
+| S2_highres | basic | 128-192-232 | 4-3-2 | no | 4,995,226 | **95.90** | **95.93** | **97.18** | **97.49** | 0.885 |
+| S3_bneck | bottleneck | 256-512-768 | 5-5-3 | yes | 4,529,290 | 95.42 | 95.46 | | | |
+| S4_deep | bottleneck | 256-448-640 | 7-7-4 | yes | 4,552,158 | 95.89 | 95.93 | 97.07 | 97.27 | **0.886** |
+
+- Without any teacher, S2 nearly matches the distilled C on CIFAR-10 test (97.18 vs. 97.22) and beats it with flip TTA (97.49 vs. 97.31).
+- Neither model beats the distilled C on Kaggle (0.889), so better CIFAR-10 accuracy did not carry over here.
+- Differences of a few thousandths are close to the noise of the public leaderboard, which scores only part of the 2,000 test images.
+
+### Round 5: distill into the S2 architecture
+
+S2 is the best architecture without KD, so it became the student. The teachers are now our own models from rounds 2-4, averaged over the horizontal flip (`--teacher-flip`). `KD5_pair` uses S2 and the distilled C, while the other two runs use seven teachers. The notebook is [`notebooks/round5_kd.ipynb`](notebooks/round5_kd.ipynb).
+
+```bash
+A="--widths 128 192 232 --blocks 4 3 2 --no-se --autoaugment --mix 0.5 --erase-p 0 --seed 1 --teacher-flip"
+PAIR="checkpoints/S2_highres.pt checkpoints/KD_C_aug.pt"
+FULL="$PAIR checkpoints/C_ta.pt checkpoints/C_mix.pt checkpoints/C_ta_mix.pt checkpoints/C_ta_mix_noerase.pt checkpoints/A_nose_ta_mix.pt"
+uv run python train.py $A --teacher $PAIR --out checkpoints/KD5_pair.pt
+uv run python train.py $A --teacher $FULL --out checkpoints/KD5_full.pt
+uv run python train.py $A --teacher $FULL --cutout --out checkpoints/KD5_full_cutout.pt
+```
+
+| run | teachers | Cutout | params | final | TTA | Kaggle |
+|-----|----------|--------|--------|-------|-----|--------|
+| KD5_pair | 2 | no | 4,995,226 | 97.31 | 97.49 | 0.887 |
+| KD5_full | 7 | no | 4,995,226 | **97.49** | **97.60** | 0.893 |
+| KD5_full_cutout | 7 | yes | 4,995,226 | 97.25 | 97.28 | **0.896** |
+
+- Seven teachers beat two on both measures: +0.18 pts on CIFAR-10 test and +0.006 on Kaggle.
+- Both seven-teacher students beat the previous best of 0.889 on Kaggle.
+- Cutout lowers CIFAR-10 test accuracy by 0.24 pts but scores 0.003 higher on Kaggle, about 3 images on the public leaderboard. With one seed, that is too small to call either way.
+
+### Round 6: regularization screen
+
+Ten teachers (the seven from round 5, plus S4, KD5_full and KD5_full_cutout), with Cutout on every run. The notebook is [`notebooks/round6_screen.ipynb`](notebooks/round6_screen.ipynb).
+
+```bash
+A="--widths 128 192 232 --blocks 4 3 2 --no-se --autoaugment --mix 0.5 --erase-p 0 --cutout --seed 1 --teacher-flip"
+TEACHERS="$FULL checkpoints/S4_deep.pt checkpoints/KD5_full.pt checkpoints/KD5_full_cutout.pt"
+uv run python train.py $A --teacher $TEACHERS --out checkpoints/R6_base.pt
+uv run python train.py $A --teacher $TEACHERS --drop-path 0.1 --ema 0.9995 --out checkpoints/R6_sd_ema.pt
+uv run python train.py $A --teacher $TEACHERS --sam 0.05 --out checkpoints/R6_sam.pt
+uv run python train.py $A --teacher $TEACHERS --drop-path 0.1 --ema 0.9995 --sam 0.05 --out checkpoints/R6_all.pt
+```
+
+| run | added | params | final | best | TTA | Kaggle |
+|-----|-------|--------|-------|------|-----|--------|
+| R6_base | none | 4,995,226 | **97.25** | **97.27** | **97.26** | **0.898** |
+| R6_sam | SAM | 4,995,226 | 97.07 | 97.17 | 97.04 | 0.891 |
+| R6_sd_ema | stochastic depth, EMA | 4,995,226 | 97.03 | 97.03 | 97.03 | 0.887 |
+| R6_all | all three | 4,995,226 | 96.83 | 96.86 | 96.90 | 0.883 |
+
+- Every added regularizer lowered both CIFAR-10 accuracy and the Kaggle score, and stacking them was worst. On top of distillation and heavy augmentation, they appear to over-regularize at 200 epochs.
+- R6_base scores +0.002 over KD5_full_cutout on Kaggle at identical final accuracy (97.25), which is within leaderboard noise.
+- Flip plus 1-pixel shift TTA left KD5_full_cutout at 0.896.
+
+### Round 7: zoom augmentation
+
+Many of the hidden images our models are least sure about show tiny objects, close-ups or unusual scenes. This round tests whether random zoom helps, along with a softer KD weight. The notebook is [`notebooks/round7_zoom.ipynb`](notebooks/round7_zoom.ipynb), and the per-epoch logs are in [`logs/7-zoom`](logs/7-zoom).
+
+```bash
+uv run python train.py $A --teacher $TEACHERS --zoom 0.75 1.33 --out checkpoints/R7_zoom.pt
+uv run python train.py $A --teacher $TEACHERS --zoom 0.5 1.5 --out checkpoints/R7_zoom_strong.pt
+uv run python train.py $A --teacher $TEACHERS --zoom 0.75 1.33 --kd-alpha 0.7 --out checkpoints/R7_zoom_a7.pt
+```
+
+| run | zoom | KD alpha | params | final | best | TTA | Kaggle |
+|-----|------|----------|--------|-------|------|-----|--------|
+| R6_base | none | 0.9 | 4,995,226 | **97.25** | **97.27** | **97.26** | **0.898** |
+| R7_zoom | 0.75-1.33 | 0.9 | 4,995,226 | 96.87 | 96.96 | 97.03 | 0.891 |
+| R7_zoom_strong | 0.5-1.5 | 0.9 | 4,995,226 | 96.89 | 96.90 | 96.91 | 0.889 |
+| R7_zoom_a7 | 0.75-1.33 | 0.7 | 4,995,226 | 97.01 | 97.06 | 97.03 | 0.896 |
+
+![Round 7 training curves](assets/7-zoom.png)
+
+- Random zoom lowered both CIFAR-10 accuracy and the Kaggle score, so object size is not the main cause of the Kaggle gap.
+- Zoom TTA on R6_base also hurt, scoring 0.883.
+- With mild zoom, the softer KD weight added 0.14 pts on CIFAR-10 and +0.005 on Kaggle. That is suggestive, but one seed cannot separate it from leaderboard noise.
 
 ## Kaggle notes
 
