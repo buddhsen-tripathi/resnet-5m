@@ -242,7 +242,28 @@ uv run python train.py $A --teacher $TEACHERS --drop-path 0.1 --ema 0.9995 --sam
 - R6_base scores +0.002 over KD5_full_cutout on Kaggle at identical final accuracy (97.25), which is within leaderboard noise.
 - Flip plus 1-pixel shift TTA left KD5_full_cutout at 0.896.
 
-Many of the hidden images our models are least sure about show tiny objects, close-ups or unusual scenes, so [`notebooks/round7_zoom.ipynb`](notebooks/round7_zoom.ipynb) adds random zoom to this recipe, mild and strong, plus a softer KD weight.
+### Round 7: zoom augmentation
+
+Many of the hidden images our models are least sure about show tiny objects, close-ups or unusual scenes. This round tests whether random zoom helps, along with a softer KD weight. The notebook is [`notebooks/round7_zoom.ipynb`](notebooks/round7_zoom.ipynb), and the per-epoch logs are in [`logs/7-zoom`](logs/7-zoom).
+
+```bash
+uv run python train.py $A --teacher $TEACHERS --zoom 0.75 1.33 --out checkpoints/R7_zoom.pt
+uv run python train.py $A --teacher $TEACHERS --zoom 0.5 1.5 --out checkpoints/R7_zoom_strong.pt
+uv run python train.py $A --teacher $TEACHERS --zoom 0.75 1.33 --kd-alpha 0.7 --out checkpoints/R7_zoom_a7.pt
+```
+
+| run | zoom | KD alpha | params | final | best | TTA | Kaggle |
+|-----|------|----------|--------|-------|------|-----|--------|
+| R6_base | none | 0.9 | 4,995,226 | **97.25** | **97.27** | **97.26** | **0.898** |
+| R7_zoom | 0.75-1.33 | 0.9 | 4,995,226 | 96.87 | 96.96 | 97.03 | 0.891 |
+| R7_zoom_strong | 0.5-1.5 | 0.9 | 4,995,226 | 96.89 | 96.90 | 96.91 | 0.889 |
+| R7_zoom_a7 | 0.75-1.33 | 0.7 | 4,995,226 | 97.01 | 97.06 | 97.03 | 0.896 |
+
+![Round 7 training curves](assets/7-zoom.png)
+
+- Random zoom lowered both CIFAR-10 accuracy and the Kaggle score, so object size is not the main cause of the Kaggle gap.
+- Zoom TTA on R6_base also hurt, scoring 0.883.
+- With mild zoom, the softer KD weight added 0.14 pts on CIFAR-10 and +0.005 on Kaggle. That is suggestive, but one seed cannot separate it from leaderboard noise.
 
 ## Kaggle notes
 
