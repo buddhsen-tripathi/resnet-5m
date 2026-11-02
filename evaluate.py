@@ -3,7 +3,7 @@ import argparse
 import torch
 from torchvision import datasets, transforms as T
 
-from model import ResNet
+from model import ResNet, tta_logits
 
 
 @torch.no_grad()
@@ -11,6 +11,8 @@ def main():
     p = argparse.ArgumentParser(description="CIFAR-10 test accuracy (with flip TTA) of checkpoints and of their logit-averaged ensemble")
     p.add_argument("checkpoints", nargs="+")
     p.add_argument("--data-dir", default="data")
+    p.add_argument("--shift", type=int, default=0, help="also average over translations of this many pixels")
+    p.add_argument("--zoom", type=float, nargs="*", default=[], help="also average over these scale factors")
     args = p.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
@@ -23,7 +25,7 @@ def main():
         ckpt = torch.load(path, map_location=device)
         model = ResNet(**ckpt["cfg"]).to(device).eval()
         model.load_state_dict(ckpt["model"])
-        out = torch.cat([(model(b) + model(b.flip(3))) / 2 for b in x.split(500)])
+        out = torch.cat([tta_logits(model, b, args.shift, args.zoom) for b in x.split(500)])
         logits.append(out)
         print(f"{path}: {(out.argmax(1) == y).float().mean():.4f}")
     if len(logits) > 1:
