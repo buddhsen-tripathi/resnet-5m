@@ -6,19 +6,30 @@ Built for the [CIFAR-10 ResNet Architecture Challenge](https://www.kaggle.com/co
 
 ## Results
 
-Our best Kaggle and CIFAR-10 scores come from `R9_combined`, a **4,937,794-parameter pre-activation ResNet distilled from an ensemble of ten of our own models**. Its training-only contrastive head brings the total trainable parameters to 4,983,618:
+**R9_combined is our best model: 90.1% Kaggle public accuracy and 97.70% CIFAR-10 accuracy with flip averaging.** Its classifier has 4,937,794 parameters; including the contrastive head used during training, the total is 4,983,618.
 
-| run | CIFAR-10 test | flip TTA | Kaggle public |
-|-----|---------------|----------|---------------|
-| `R6_base` | 97.25% | 97.26% | 0.898 |
-| `KD5_full_cutout` | 97.25% | 97.28% | 0.896 |
-| `R8_base_300` | 97.25% | 97.46% | 0.895 |
-| `KD5_full` | 97.49% | 97.60% | 0.893 |
-| `R9_combined` | **97.54%** | **97.70%** | **0.901** |
+We trained **28 single models across nine rounds**, exploring architecture, augmentation, distillation, regularization and training duration within the same 5M budget.
 
-`R9_combined` is the checkpoint to use for the best recorded Kaggle public score and CIFAR-10 test accuracy. It is a single model under 5M parameters. Ensembles are used as teachers, with only the student used for submission.
+| Model | Main change | Classifier params | Epochs | CIFAR-10 test | Flip TTA | Kaggle public |
+|---|---|---:|---:|---:|---:|---:|
+| **R9_combined** | AugMix + smaller Cutout + softer KD + contrastive loss | **4,937,794** | 200 | **97.54%** | **97.70%** | **0.901** |
+| R6_base | Ten teachers + 16px Cutout | 4,995,226 | 200 | 97.25% | 97.26% | 0.898 |
+| KD5_full_cutout | Seven teachers + 16px Cutout | 4,995,226 | 200 | 97.25% | 97.28% | 0.896 |
+| R8_base_300 | R6 recipe, longer cosine schedule | 4,995,226 | 300 | 97.25% | 97.46% | 0.895 |
+| KD5_full | Seven teachers, no Cutout | 4,995,226 | 200 | 97.49% | 97.60% | 0.893 |
 
-| Round | Question | Highest Kaggle public score in the round | Run |
+![Comparison of all 28 completed models: classifier parameter counts, CIFAR-10 final and flip-averaged accuracy, and recorded Kaggle public accuracy. R9 leads both accuracy measures.](assets/all-models.png)
+
+[Full model table and checkpoint links](docs/model-comparison.md) · [Chart source data](assets/experiments.json). The chart excludes teacher ensembles, 60-epoch screening runs and alternative inference settings. Missing Kaggle scores mean no recorded submission for that checkpoint and protocol. CIFAR-10 results retain each run's recorded evaluation precision; R6's later full-precision re-evaluation gives 97.26% without TTA.
+
+### What the experiments showed
+
+- **Architecture alone gave modest gains:** the five initial depth/width/SE configurations finished within 0.42 percentage points of each other.
+- **Augmentation and distillation helped:** stronger augmentation added 0.5–0.75 points in round 2; distillation with strong augmentation added another 0.2–0.5 in round 3.
+- **More training was not enough:** R8 improved flip-TTA accuracy over R6, but its Kaggle score fell from 0.898 to 0.895. The tested extra regularization and zoom recipes also fell short of R6.
+- **The combined recipe performed best:** R9 reached 0.901 at 200 epochs, up 0.003 over R6. This changes several ingredients together, so it does not isolate which ingredient caused the improvement.
+
+| Round | Question | Best Kaggle public | Run |
 |-------|----------|------------------------------------------|-----|
 | [1](#round-1-architecture) | Depth, width and SE | 0.873 | A with SE |
 | [2](#round-2-augmentation) | Stronger augmentation | 0.884 | `C_ta_mix_noerase` |
@@ -28,36 +39,35 @@ Our best Kaggle and CIFAR-10 scores come from `R9_combined`, a **4,937,794-param
 | [6](#round-6-regularization-screen) | SAM, EMA and stochastic depth | 0.898 | `R6_base` |
 | [7](#round-7-zoom-augmentation) | Zoom and distillation weight | 0.896 | `R7_zoom_a7` |
 | [8](#round-8-training-duration) | 200 vs. 300 epochs | 0.895 | `R8_base_300` |
-| [9](#round-9-combined-data-focused-recipe) | Smaller Cutout, softer KD, AugMix and contrastive learning | **0.901** | `R9_combined` |
+| [9](#round-9-combined-data-focused-recipe) | Combined data-focused recipe | **0.901** | `R9_combined` |
 
-Stronger augmentation improved CIFAR-10 accuracy by 0.5-0.75 percentage points in round 2. Distillation with strong augmentation added another 0.2-0.5 points in round 3. The higher-resolution S2 architecture and larger teacher sets were used in later rounds. Additional regularization and zoom did not beat `R6_base` in the tested recipes.
+Each configuration has one recorded seed. Recipes, teachers and hardware vary across rounds; the tables describe these experiments rather than establish universal rankings of training methods. Kaggle scores are public scores; the private leaderboard determines the final ranking.
 
-These are single-seed experiments. Small leaderboard gaps should be treated cautiously, and higher CIFAR-10 test accuracy did not consistently translate into a higher Kaggle score in rounds 4-8.
+## Model weights
 
-## Pretrained weights
-
-The best model, `R9_combined` (0.901 Kaggle public), ships with the repo, so it can be used right after cloning. The round 8 duration experiment and earlier baselines are also available in `weights/`:
+Clone the repository and run the best model:
 
 ```bash
 uv sync
 uv run python evaluate.py weights/R9_combined.pt       # 97.70% with flip TTA
-uv run python predict.py --checkpoint weights/R9_combined.pt
-uv run python evaluate.py weights/R8_base_300.pt       # 97.46% with flip TTA
+uv run python predict.py --checkpoint weights/R9_combined.pt --out submission.csv
 ```
 
-`weights/R8_base_300.pt` and `weights/R9_combined.pt` contain the exact student weights used for their Kaggle submissions. Configurations, counts and SHA-256 checksums are recorded in [`weights/round8-9.json`](weights/round8-9.json). These inference exports omit optimizer state and the R9 training-only projection head; they support evaluation, prediction and use as teachers, but cannot be resumed with `--resume`.
+Evaluation downloads CIFAR-10 automatically. Prediction needs the competition files in `data/kaggle/`; see [Kaggle notes](#kaggle-notes). Earlier baselines and the R8 duration experiment are also included in `weights/`.
 
-`weights/KD_C_aug.pt`, the best submitted model from rounds 1-3, is also included (97.31% CIFAR-10 accuracy with flip TTA, 0.889 Kaggle public). Evaluation downloads CIFAR-10 automatically. Prediction additionally requires the competition test files described in [Kaggle notes](#kaggle-notes).
-
-Weights are attached to two releases, and file names match the run names in the experiment tables below. The [v0.1 release](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.1) holds all 14 runs from rounds 1-3 (~19 MB each), and the [v0.2 release](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.2) holds 12 runs from rounds 4-7 (~20 MB each). The 60-epoch screening runs S0_C, S1_mid and S3_bneck are not included:
+| Release | Rounds | Models | Contents |
+|---|---|---:|---|
+| [v0.3](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.3) | 8–9 | 2 | R8's 300-epoch experiment and R9's best-scoring combined recipe |
+| [v0.2](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.2) | 4–7 | 12 | Architecture, teacher count, regularization and zoom experiments |
+| [v0.1](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.1) | 1–3 | 14 | Initial architecture, augmentation and distillation experiments |
 
 ```bash
-gh release download v0.1 -D checkpoints                  # all runs from rounds 1-3
-gh release download v0.2 -D checkpoints                  # runs from rounds 4-7
-gh release download v0.2 -p "R6_*.pt" -D checkpoints     # a subset
+gh release download v0.3 -p '*.pt' -D checkpoints     # the two latest models
+gh release download v0.2 -p '*.pt' -D checkpoints     # rounds 4–7
+gh release download v0.1 -p '*.pt' -D checkpoints     # rounds 1–3
 ```
 
-They load in `predict.py`, `evaluate.py` and as distillation teachers (`--teacher`). They hold the weights and config only, not the optimizer state, so `--resume` cannot continue them; use them for inference or as teachers for a new student. Loading existing weights as a starting point for fine-tuning is not currently supported by `train.py`.
+Each file is named after its run and contains the student weights and model configuration (~19–20 MB). These exports load in `evaluate.py`, `predict.py` and as distillation teachers (`--teacher`); resuming requires a full training checkpoint with optimizer state. R9's training-only projection head is omitted from its inference export. The exact R8/R9 Kaggle exports and SHA-256 checksums are recorded in [`weights/round8-9.json`](weights/round8-9.json), also attached to v0.3. The 60-epoch architecture screens are not release assets.
 
 ## Usage
 
@@ -93,20 +103,29 @@ Widths, blocks per stage and block type are configurable (`--widths`, `--blocks`
 | D | basic | 96-192-320 | 2-2-2 | yes | 4,939,894 |
 | S2 (`R6_base`, `KD5_full`) | basic | 128-192-232 | 4-3-2 | no | 4,995,226 |
 | S4 | bottleneck | 256-448-640 | 7-7-4 | yes | 4,552,158 |
+| R9 | basic | 128-192-228 | 4-3-2 | no | 4,937,794 |
 
 `R6_base` uses S2 without SE, stochastic depth, EMA or SAM. Its training recipe adds TrivialAugment, CutMix/MixUp on half the batches, Cutout and flip-averaged distillation from ten teachers (temperature 4, distillation weight 0.9).
 
 ## Training recipe
 
-- SGD (momentum 0.9, Nesterov), lr 0.2, batch 256, 5-epoch linear warmup then cosine decay, 200 epochs
-- Weight decay 5e-4 (not on BN/bias), label smoothing 0.1
-- Augmentation: random crop (reflect pad 4), horizontal flip, optional random zoom (`--zoom MIN MAX`), random erasing (`--erase-p`) or a fixed Cutout square (`--cutout`, side length `--cutout-size`, default 16); optional TrivialAugment (`--autoaugment`) or AugMix transforms (`--augmix`, without a separate Jensen-Shannon loss), and per-batch CutMix/MixUp (`--mix 0.5`)
-- Knowledge distillation (`--teacher ckpt [ckpt ...]`): the student matches the averaged logits of the teachers on the *same augmented batch* (KL at temperature `--kd-temp`, weighted by `--kd-alpha` against the label loss); `--teacher-flip` also averages the teachers over the horizontal flip
-- Supervised contrastive learning (`--supcon WEIGHT`, temperature `--supcon-temp`, default 0.07): two independently augmented, unmixed views share their original class labels. A 128-dimensional MLP projection head is trained alongside the classifier and saved for resuming, but is unused for inference. CutMix/MixUp remains confined to the classification/distillation branch. The implementation concatenates classification and contrastive views into one student forward pass, so they share batch-normalization statistics.
-- Optional regularizers: stochastic depth (`--drop-path`), weight EMA (`--ema`, evaluates and saves the EMA model) and SAM (`--sam`, about twice the compute, not supported with float16 loss scaling)
-- bf16 mixed precision (float16 with loss scaling on GPUs without bf16) and channels-last on CUDA; checkpoint written atomically every epoch
+The latest three runs share SGD with momentum 0.9 and Nesterov, batch size 256, initial learning rate 0.2, five warmup epochs, cosine decay, weight decay 5e-4 and ten frozen teachers trained by us. Their differences are:
 
-The official 10k CIFAR-10 test split is evaluated after each epoch and never used for gradient updates. The saved checkpoint is overwritten after each epoch, so it contains the final model rather than the best-scoring epoch. Test accuracy has informed choices between experiments, so these results are not an independent final evaluation of the selected recipe. Training uses only the 50k training images; CIFAR-10 test images and competition test images are excluded from training, including pseudo-labeling.
+| Setting | R6_base | R8_base_300 | R9_combined |
+|---|---|---|---|
+| Epochs | 200 | 300 | 200 |
+| Stage widths / blocks | 128-192-232 / 4-3-2 | Same as R6 | 128-192-228 / 4-3-2 |
+| Image augmentation | TrivialAugment | TrivialAugment | AugMix |
+| CutMix/MixUp probability | 0.5 | 0.5 | 0.5 |
+| Cutout square | 16×16 | 16×16 | 8×8 |
+| Distillation weight / temperature | 0.9 / 4 | 0.9 / 4 | 0.7 / 4 |
+| Label smoothing | 0.1 | 0.1 | 0 |
+| Supervised contrastive loss | Off | Off | Weight 0.1, temperature 0.07 |
+| Seed | 1 | 1 | 1 |
+
+[Training commands for all nine rounds](docs/training.md) include the complete flags and teacher lists. `train.py --help` documents the available options. Training writes checkpoints atomically after every epoch and uses mixed precision on CUDA.
+
+Only the 50k CIFAR-10 training images contribute gradient updates. The official 10k test split is monitored after each epoch and has informed experiment choices, so it is not an independent final assessment of the selected recipe. The saved checkpoint is the final epoch, not the epoch with the highest observed score.
 
 ## Experiments
 
@@ -114,7 +133,7 @@ Rounds 1-7 and 9 use **200 epochs** for full runs; round 8 tests **300 epochs**.
 
 Rounds 1-3 ran on one NVIDIA B300, with full per-epoch logs in [`logs/`](logs). Rounds 4-7 used Colab A100 notebooks in [`notebooks/`](notebooks); only round 7's per-epoch logs are currently committed alongside the round 1-3 logs. The notebooks embed the model and training code used for their experiments.
 
-Rounds 8-9 ran on one H200. Their logs include the runtime package versions, recipe manifests, full-precision evaluation and Kaggle submission records. Recreate their unsmoothed training curves with `uv run --no-project --with matplotlib python scripts/plot_training.py`; Matplotlib is only needed for plotting.
+Rounds 8-9 ran on one H200. Their logs include the runtime package versions, recipe manifests, full-precision evaluation and Kaggle submission records. Recreate their unsmoothed training curves with `uv run --no-project --with matplotlib python scripts/plot_training.py`, or the all-model comparison with `uv run --no-project --with matplotlib python scripts/plot_experiments.py`. Matplotlib is only needed for plotting.
 
 *Final* is test accuracy after the last epoch, *best* is the highest observed epoch, and *TTA* is the final checkpoint averaged with its horizontal flip (`evaluate.py`). CIFAR-10 values are percentages; Kaggle scores are fractions. Training evaluation uses CUDA mixed precision, while `evaluate.py` uses full precision, so small differences between devices or evaluation paths are possible.
 
@@ -124,13 +143,7 @@ Commands below use shell arrays and work in Bash and Zsh. Each round defines its
 
 How to spend 5M parameters: deeper (B) vs. wider (C, D), and whether SE helps (A with/without).
 
-```bash
-uv run python train.py --out checkpoints/A_64-128-256_343_se.pt
-uv run python train.py --no-se --out checkpoints/A_64-128-256_343_nose.pt
-uv run python train.py --blocks 3 5 3 --out checkpoints/B_64-128-256_353_se.pt
-uv run python train.py --widths 80 160 320 --blocks 2 3 2 --out checkpoints/C_80-160-320_232_se.pt
-uv run python train.py --widths 96 192 320 --blocks 2 2 2 --out checkpoints/D_96-192-320_222_se.pt
-```
+[Training commands](docs/training.md#round-1-architecture)
 
 | run | widths | blocks | SE | params | final | best | TTA |
 |-----|--------|--------|----|--------|-------|------|-----|
@@ -152,14 +165,7 @@ uv run python train.py --widths 96 192 320 --blocks 2 2 2 --out checkpoints/D_96
 
 Same budget, stronger regularization: TrivialAugment (per-image), CutMix/MixUp (per-batch, half the batches), and whether random erasing is still useful on top.
 
-```bash
-C=(--widths 80 160 320 --blocks 2 3 2)
-uv run python train.py "${C[@]}" --autoaugment --out checkpoints/C_ta.pt
-uv run python train.py "${C[@]}" --mix 0.5 --out checkpoints/C_mix.pt
-uv run python train.py "${C[@]}" --autoaugment --mix 0.5 --out checkpoints/C_ta_mix.pt
-uv run python train.py "${C[@]}" --autoaugment --mix 0.5 --erase-p 0 --out checkpoints/C_ta_mix_noerase.pt
-uv run python train.py --no-se --autoaugment --mix 0.5 --out checkpoints/A_nose_ta_mix.pt
-```
+[Training commands](docs/training.md#round-2-augmentation)
 
 | run | augmentation | params | final | best | TTA |
 |-----|--------------|--------|-------|------|-----|
@@ -182,15 +188,7 @@ uv run python train.py --no-se --autoaugment --mix 0.5 --out checkpoints/A_nose_
 
 The ensembles are better than any single model but are 5x over the budget. Distillation moves that accuracy into one model under 5M: the student is trained on the averaged logits of the teacher ensemble, computed on the same augmented batch it sees. Teachers are our own models trained from scratch on the same data, as the rules allow.
 
-```bash
-R1=(checkpoints/A_64-128-256_343_se.pt checkpoints/A_64-128-256_343_nose.pt checkpoints/B_64-128-256_353_se.pt checkpoints/C_80-160-320_232_se.pt checkpoints/D_96-192-320_222_se.pt)
-R2=(checkpoints/C_ta.pt checkpoints/C_mix.pt checkpoints/C_ta_mix.pt checkpoints/C_ta_mix_noerase.pt checkpoints/A_nose_ta_mix.pt)
-C=(--widths 80 160 320 --blocks 2 3 2)
-uv run python train.py "${C[@]}" --teacher "${R1[@]}" --out checkpoints/C_kd5.pt
-uv run python train.py "${C[@]}" --autoaugment --mix 0.5 --erase-p 0 --teacher "${R2[@]}" --out checkpoints/KD_C_aug.pt
-uv run python train.py --no-se --autoaugment --mix 0.5 --erase-p 0 --teacher "${R2[@]}" --out checkpoints/KD_A_nose_aug.pt
-uv run python train.py "${C[@]}" --autoaugment --mix 0.5 --erase-p 0 --teacher "${R2[@]}" --kd-temp 1 --kd-alpha 1.0 --out checkpoints/KD_C_aug_T1.pt
-```
+[Training commands](docs/training.md#round-3-knowledge-distillation)
 
 | run | augmentation | teacher | KD loss | params | final | best | TTA | same run without KD |
 |-----|--------------|---------|---------|--------|-------|------|-----|---------------------|
@@ -213,19 +211,7 @@ uv run python train.py "${C[@]}" --autoaugment --mix 0.5 --erase-p 0 --teacher "
 
 Round 1 compared architectures with weak augmentation. This round repeats the search with TrivialAugment and CutMix/MixUp, including higher-resolution stages and bottleneck blocks. Five candidates were screened for 60 epochs ([`notebooks/round4_screening.ipynb`](notebooks/round4_screening.ipynb)), and the top two were confirmed for 200 ([`notebooks/round4_confirm.ipynb`](notebooks/round4_confirm.ipynb)).
 
-```bash
-A=(--autoaugment --mix 0.5 --erase-p 0 --workers 6)
-# Screen all five architectures for 60 epochs.
-uv run python train.py --widths 80 160 320 --blocks 2 3 2 "${A[@]}" --epochs 60 --out checkpoints/screen_S0_C.pt
-uv run python train.py --widths 96 168 232 --blocks 3 3 3 "${A[@]}" --epochs 60 --out checkpoints/screen_S1_mid.pt
-uv run python train.py --widths 128 192 232 --blocks 4 3 2 --no-se "${A[@]}" --epochs 60 --out checkpoints/screen_S2_highres.pt
-uv run python train.py --block bottleneck --widths 256 512 768 --blocks 5 5 3 "${A[@]}" --epochs 60 --out checkpoints/screen_S3_bneck.pt
-uv run python train.py --block bottleneck --widths 256 448 640 --blocks 7 7 4 "${A[@]}" --epochs 60 --out checkpoints/screen_S4_deep.pt
-
-# Train the selected architectures from scratch for 200 epochs.
-uv run python train.py --widths 128 192 232 --blocks 4 3 2 --no-se "${A[@]}" --epochs 200 --out checkpoints/S2_highres.pt
-uv run python train.py --block bottleneck --widths 256 448 640 --blocks 7 7 4 "${A[@]}" --epochs 200 --out checkpoints/S4_deep.pt
-```
+[Training commands](docs/training.md#round-4-architecture-under-strong-augmentation)
 
 | run | block | widths | blocks | SE | params | 60 epochs (final) | 60 epochs (best) | 200 epochs (final) | TTA | Kaggle |
 |-----|-------|--------|--------|----|--------|-------------------|------------------|--------------------|-----|--------|
@@ -243,14 +229,7 @@ uv run python train.py --block bottleneck --widths 256 448 640 --blocks 7 7 4 "$
 
 S2 is the best architecture without KD, so it became the student. The teachers are now our own models from rounds 2-4, averaged over the horizontal flip (`--teacher-flip`). `KD5_pair` uses S2 and the distilled C, while the other two runs use seven teachers. The notebook is [`notebooks/round5_kd.ipynb`](notebooks/round5_kd.ipynb).
 
-```bash
-A=(--widths 128 192 232 --blocks 4 3 2 --no-se --autoaugment --mix 0.5 --erase-p 0 --seed 1 --teacher-flip --epochs 200 --workers 4)
-PAIR=(checkpoints/S2_highres.pt checkpoints/KD_C_aug.pt)
-FULL=("${PAIR[@]}" checkpoints/C_ta.pt checkpoints/C_mix.pt checkpoints/C_ta_mix.pt checkpoints/C_ta_mix_noerase.pt checkpoints/A_nose_ta_mix.pt)
-uv run python train.py "${A[@]}" --teacher "${PAIR[@]}" --out checkpoints/KD5_pair.pt
-uv run python train.py "${A[@]}" --teacher "${FULL[@]}" --out checkpoints/KD5_full.pt
-uv run python train.py "${A[@]}" --teacher "${FULL[@]}" --cutout --out checkpoints/KD5_full_cutout.pt
-```
+[Training commands](docs/training.md#round-5-distill-into-the-s2-architecture)
 
 | run | teachers | Cutout | params | final | TTA | Kaggle |
 |-----|----------|--------|--------|-------|-----|--------|
@@ -266,19 +245,7 @@ uv run python train.py "${A[@]}" --teacher "${FULL[@]}" --cutout --out checkpoin
 
 Ten teachers (the seven from round 5, plus S4, KD5_full and KD5_full_cutout), with Cutout on every run. The notebook is [`notebooks/round6_screen.ipynb`](notebooks/round6_screen.ipynb).
 
-```bash
-A=(--widths 128 192 232 --blocks 4 3 2 --no-se --autoaugment --mix 0.5 --erase-p 0 --cutout --seed 1 --teacher-flip --epochs 200 --workers 3)
-TEACHERS=(
-  checkpoints/S2_highres.pt checkpoints/KD_C_aug.pt
-  checkpoints/C_ta.pt checkpoints/C_mix.pt checkpoints/C_ta_mix.pt
-  checkpoints/C_ta_mix_noerase.pt checkpoints/A_nose_ta_mix.pt
-  checkpoints/S4_deep.pt checkpoints/KD5_full.pt checkpoints/KD5_full_cutout.pt
-)
-uv run python train.py "${A[@]}" --teacher "${TEACHERS[@]}" --out checkpoints/R6_base.pt
-uv run python train.py "${A[@]}" --teacher "${TEACHERS[@]}" --drop-path 0.1 --ema 0.9995 --out checkpoints/R6_sd_ema.pt
-uv run python train.py "${A[@]}" --teacher "${TEACHERS[@]}" --sam 0.05 --out checkpoints/R6_sam.pt
-uv run python train.py "${A[@]}" --teacher "${TEACHERS[@]}" --drop-path 0.1 --ema 0.9995 --sam 0.05 --out checkpoints/R6_all.pt
-```
+[Training commands](docs/training.md#round-6-regularization-screen)
 
 | run | added | params | final | best | TTA | Kaggle |
 |-----|-------|--------|-------|------|-----|--------|
@@ -295,18 +262,7 @@ uv run python train.py "${A[@]}" --teacher "${TEACHERS[@]}" --drop-path 0.1 --em
 
 Many of the hidden images our models are least sure about show tiny objects, close-ups or unusual scenes. This round tests whether random zoom helps, along with a softer KD weight. The notebook is [`notebooks/round7_zoom.ipynb`](notebooks/round7_zoom.ipynb), and the per-epoch logs are in [`logs/7-zoom`](logs/7-zoom).
 
-```bash
-A=(--widths 128 192 232 --blocks 4 3 2 --no-se --autoaugment --mix 0.5 --erase-p 0 --cutout --seed 1 --teacher-flip --epochs 200 --workers 4)
-TEACHERS=(
-  checkpoints/S2_highres.pt checkpoints/KD_C_aug.pt
-  checkpoints/C_ta.pt checkpoints/C_mix.pt checkpoints/C_ta_mix.pt
-  checkpoints/C_ta_mix_noerase.pt checkpoints/A_nose_ta_mix.pt
-  checkpoints/S4_deep.pt checkpoints/KD5_full.pt checkpoints/KD5_full_cutout.pt
-)
-uv run python train.py "${A[@]}" --teacher "${TEACHERS[@]}" --zoom 0.75 1.33 --out checkpoints/R7_zoom.pt
-uv run python train.py "${A[@]}" --teacher "${TEACHERS[@]}" --zoom 0.5 1.5 --out checkpoints/R7_zoom_strong.pt
-uv run python train.py "${A[@]}" --teacher "${TEACHERS[@]}" --zoom 0.75 1.33 --kd-alpha 0.7 --out checkpoints/R7_zoom_a7.pt
-```
+[Training commands](docs/training.md#round-7-zoom-augmentation)
 
 | run | zoom | KD alpha | params | final | best | TTA | Kaggle |
 |-----|------|----------|--------|-------|------|-----|--------|
@@ -325,19 +281,7 @@ uv run python train.py "${A[@]}" --teacher "${TEACHERS[@]}" --zoom 0.75 1.33 --k
 
 The `R6_base` recipe was trained from scratch for 300 epochs, with its cosine schedule extended across all 300. Architecture, ten teachers, augmentation and seed 1 were retained. The run used one H200, took 82.74 minutes of epoch time, and resumed from epoch 113 after the VM was stopped. Full logs and runtime details are in [`logs/8-duration/`](logs/8-duration/).
 
-```bash
-TEACHERS=(
-  checkpoints/S2_highres.pt checkpoints/KD_C_aug.pt
-  checkpoints/C_ta.pt checkpoints/C_mix.pt checkpoints/C_ta_mix.pt
-  checkpoints/C_ta_mix_noerase.pt checkpoints/A_nose_ta_mix.pt
-  checkpoints/S4_deep.pt checkpoints/KD5_full.pt checkpoints/KD5_full_cutout.pt
-)
-uv run python train.py --widths 128 192 232 --blocks 4 3 2 --no-se \
-  --autoaugment --mix 0.5 --erase-p 0 --cutout \
-  --teacher-flip --kd-alpha 0.9 --kd-temp 4 --label-smoothing 0.1 \
-  --epochs 300 --seed 1 --workers 3 \
-  --teacher "${TEACHERS[@]}" --out checkpoints/R8_base_300.pt
-```
+[Training commands](docs/training.md#round-8-training-duration)
 
 | run | epochs | no TTA | flip TTA | Kaggle public |
 |-----|--------|--------|----------|---------------|
@@ -354,23 +298,11 @@ One combined 200-epoch experiment, rather than separate ablations: 8x8 Cutout, K
 
 The last stage is narrowed from 232 to 228 channels so the 128-dimensional, two-layer contrastive projection head fits the budget. The classifier has **4,937,794 parameters**, the projection head **45,824**, and all trainable parameters total **4,983,618**. Teachers are frozen and the projection head is unused during inference.
 
-```bash
-TEACHERS=(
-  checkpoints/S2_highres.pt checkpoints/KD_C_aug.pt
-  checkpoints/C_ta.pt checkpoints/C_mix.pt checkpoints/C_ta_mix.pt
-  checkpoints/C_ta_mix_noerase.pt checkpoints/A_nose_ta_mix.pt
-  checkpoints/S4_deep.pt checkpoints/KD5_full.pt checkpoints/KD5_full_cutout.pt
-)
-uv run python train.py --widths 128 192 228 --blocks 4 3 2 --no-se \
-  --augmix --mix 0.5 --erase-p 0 --cutout --cutout-size 8 \
-  --supcon 0.1 --supcon-temp 0.07 --teacher-flip --kd-alpha 0.7 --kd-temp 4 \
-  --label-smoothing 0 --epochs 200 --seed 1 --workers 8 \
-  --teacher "${TEACHERS[@]}" --out checkpoints/R9_combined.pt
-```
+[Training commands](docs/training.md#round-9-combined-data-focused-recipe)
 
 The contrastive objective uses the original class labels and two unmixed views; classification and distillation use the potentially mixed batch. New checkpoints retain the projection head, optimizer, scheduler and main-process CPU/CUDA RNG states for resuming. Persistent data-loader workers' augmentation streams are not restored bit-for-bit after interruption.
 
-Training completed all 200 epochs on one H200. Full-precision evaluation reached **97.54% without TTA** and **97.70% with horizontal-flip averaging**, compared with 97.26%/97.26% for R6_base and 97.25%/97.46% for R8_base_300 in the same evaluation. The flip-averaged R9 submission scored **0.901 on Kaggle public**, beating R6_base's 0.898 by 0.3 percentage points (six additional correct predictions out of 2,000). Results, submission metadata and runtime records are in [`logs/9-combined/`](logs/9-combined/). The combined experiment cannot attribute any gain or loss to an individual change.
+Training completed all 200 epochs on one H200. Full-precision evaluation reached **97.54% without TTA** and **97.70% with horizontal-flip averaging**, compared with 97.26%/97.26% for R6_base and 97.25%/97.46% for R8_base_300 in the same evaluation. The flip-averaged R9 submission scored **0.901 on Kaggle public**, beating R6_base's 0.898 by 0.3 percentage points (three additional correct predictions on the 1,000-image public split). Results, submission metadata and runtime records are in [`logs/9-combined/`](logs/9-combined/). The combined experiment cannot attribute any gain or loss to an individual change.
 
 | run | no TTA | flip TTA | Kaggle public |
 |-----|--------|----------|---------------|
@@ -384,6 +316,6 @@ The curves show unsmoothed per-epoch mixed-precision evaluation without TTA. R9'
 
 ## Kaggle notes
 
-- The test set is 2,000 32x32 PNGs plus `test.csv` (`id,filename`); submissions are `id,label` with CIFAR-10 class indices. These files and account credentials are not included in the repository.
+- The test set is 2,000 32x32 PNGs plus `test.csv` (`id,filename`); 1,000 images determine the public score and 1,000 the private score. Submissions are `id,label` with CIFAR-10 class indices. These files and account credentials are not included in the repository.
 - For local prediction, place `test.csv` in `data/kaggle/` and the PNGs in `data/kaggle/test_images/`, or pass the containing directory with `--data-dir`. `predict.py` writes a CSV locally; it does not submit it to Kaggle.
 - Bulk download is not available for this competition, and per-file API downloads are rate-limited (HTTP 429). Predictions can instead be made inside a private Kaggle notebook with the competition data attached and the checkpoint uploaded as a private dataset, running `predict.py --data-dir <competition input dir>`.
