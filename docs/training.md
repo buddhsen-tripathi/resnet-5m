@@ -150,4 +150,3 @@ uv run python train.py --widths 128 192 228 --blocks 4 3 2 --no-se \
   --label-smoothing 0 --epochs 200 --seed 1 --workers 8 \
   --teacher "${TEACHERS[@]}" --out checkpoints/R9_combined.pt
 ```
-
