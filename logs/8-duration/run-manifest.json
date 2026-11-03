@@ -1,0 +1,52 @@
+{
+  "experiment": "R8_base_300",
+  "purpose": "R6_base recipe trained from scratch for 300 epochs instead of 200",
+  "baseline": "weights/R6_base.pt",
+  "source_revision": "8db81cbb1fdee8c3b5d767fd5a08f54b0f5ccdde",
+  "source_sha256": {
+    "model.py": "c83f9ce02f369125b5bfde299804014a7d2841416e3516d12b326dd4b244c6f2",
+    "train.py": "917e1d275d33547409510f9e1262012c32168134f2153badd1a06a40a6991264",
+    "evaluate.py": "35ffe3c76558e26c7b44a4bd5c5f4222321915714d70d184572b5443b5286a53",
+    "predict.py": "3a9ba993524c251b22777b435f0ae9d9e420e8a3cdd29052b7a5a6f20063eb63",
+    "pyproject.toml": "24c632312823621bfd363cff58e3a1e759808754abcc65f8fdf5786518636122",
+    "uv.lock": "2bd1ea7cef769295b4a263bbedbbfdc76e96cdbfc7510bbe226640d2c3298460"
+  },
+  "student_cfg": {
+    "widths": [
+      128,
+      192,
+      232
+    ],
+    "blocks": [
+      4,
+      3,
+      2
+    ],
+    "se": false,
+    "block": "basic",
+    "drop_path": 0.0
+  },
+  "parameters": 4995226,
+  "epochs": 300,
+  "seed": 1,
+  "batch_size": 256,
+  "workers": 3,
+  "learning_rate": 0.2,
+  "warmup_epochs": 5,
+  "schedule": "cosine decay over all 300 epochs",
+  "weight_decay": 0.0005,
+  "label_smoothing": 0.1,
+  "augmentation": {
+    "trivial_augment": true,
+    "mix_probability": 0.5,
+    "cutout": true,
+    "zoom": null
+  },
+  "distillation": {
+    "temperature": 4.0,
+    "alpha": 0.9,
+    "teacher_flip": true,
+    "teacher_count": 10
+  },
+  "runtime_note": "CUDA 12.8 PyTorch build installed separately from uv.lock for this VM; resolved versions recorded in environment.txt. Different hardware/software from Colab baseline."
+}

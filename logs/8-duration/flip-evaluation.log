@@ -1,0 +1,3 @@
+weights/R6_base.pt: 0.9726
+checkpoints/R8_base_300.pt: 0.9746
+ensemble of 2: 0.9746

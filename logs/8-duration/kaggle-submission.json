@@ -1,0 +1,33 @@
+{
+  "run": "R8_base_300",
+  "epoch": 300,
+  "rows": 2000,
+  "local_agreement": "842/842",
+  "class_counts": {
+    "6": 185,
+    "3": 200,
+    "9": 196,
+    "2": 211,
+    "8": 203,
+    "4": 190,
+    "5": 210,
+    "7": 205,
+    "1": 222,
+    "0": 178
+  },
+  "submission_sha256": "53a07a193221815f33cba7320a30a85a1fc604383b6b1068e134aea69070a7e8",
+  "checkpoint_sha256": "90628736ff5d984f716a6db3618a558f530410eecbb0f2b91db3494c36425ccf",
+  "kernel": "btr1pathi/cnn-maxxxing-predict",
+  "kernel_version": 4,
+  "dataset_version": 4,
+  "competition": "cifar-10-res-net-architecture-challenge-dl",
+  "submission": {
+    "ref": "57938677",
+    "fileName": "submission_R8_base_300.csv",
+    "date": "2026-11-03 07:43:39.740000",
+    "description": "R8_base_300: R6_base recipe trained from scratch for 300 epochs, seed 1, 4,995,226 parameters, 10 teachers, Cutout, flip TTA; CIFAR-10 97.25% raw and 97.46% flip TTA. Resumed after epoch 113 following VM interruption.",
+    "status": "SubmissionStatus.COMPLETE",
+    "publicScore": "0.89500",
+    "privateScore": ""
+  }
+}
