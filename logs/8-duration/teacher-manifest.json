@@ -1,0 +1,52 @@
+[
+  {
+    "name": "A_nose_ta_mix.pt",
+    "bytes": 37069247,
+    "sha256": "9100b47d4335b36a572b191d120c346d1beb476d6630cea1c7500e35e6340a01"
+  },
+  {
+    "name": "C_mix.pt",
+    "bytes": 38762895,
+    "sha256": "1df904296fc07abd92e5f66ae343b4a542fbc1fee028a5b45fbba1edbf34445d"
+  },
+  {
+    "name": "C_ta.pt",
+    "bytes": 38762688,
+    "sha256": "8c91223b0444866c70b731170f59c908a62a408523a93c41a1fa2405c04f7632"
+  },
+  {
+    "name": "C_ta_mix.pt",
+    "bytes": 38774268,
+    "sha256": "c17b2227527cd8d797f6306a957733faec8e67bbef614e0ac36a4d9e4b77389c"
+  },
+  {
+    "name": "C_ta_mix_noerase.pt",
+    "bytes": 38775924,
+    "sha256": "fd746814a44f30c5548127a4034cf8cdc36da128723d13db1a469433c48a2c48"
+  },
+  {
+    "name": "KD5_full.pt",
+    "bytes": 20044749,
+    "sha256": "b829612eb7ce089790b7b71a2e5cd867877547b960b040ad4edb89f864c24cad"
+  },
+  {
+    "name": "KD5_full_cutout.pt",
+    "bytes": 20045631,
+    "sha256": "e27c77dd025f88713a120b4249e864b84350bb93a8c97c50b2a015513d5794dd"
+  },
+  {
+    "name": "KD_C_aug.pt",
+    "bytes": 19404873,
+    "sha256": "98c50396814ff2191511d865d4bc1d23beb20a3a180faa61e02081383e1fbde8"
+  },
+  {
+    "name": "S2_highres.pt",
+    "bytes": 20045001,
+    "sha256": "f9ff5ec7c23439f9840b5a4e1c86c8e5ae56a3a0793a2c1c75a7cd2084285af3"
+  },
+  {
+    "name": "S4_deep.pt",
+    "bytes": 18428751,
+    "sha256": "a6d7ace8bfea44eaa83008bf70ec3b2902d9b752d71a57f67241f543a5a5aed8"
+  }
+]

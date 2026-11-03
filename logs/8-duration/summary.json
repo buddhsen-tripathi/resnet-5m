@@ -1,0 +1,19 @@
+{
+  "run": "R8_base_300",
+  "completed_epochs": 300,
+  "parameters": 4995226,
+  "seed": 1,
+  "training_minutes": 82.74,
+  "final_training_accuracy_percent": 97.25,
+  "best_training_accuracy_percent": 97.39999999999999,
+  "best_epoch": 284,
+  "final_raw_accuracy_percent": 97.25,
+  "final_flip_accuracy_percent": 97.46,
+  "baseline_raw_accuracy_percent": 97.26,
+  "baseline_flip_accuracy_percent": 97.26,
+  "resumed_after_epoch": 113,
+  "gpu": "NVIDIA H200",
+  "kaggle_score": 0.895,
+  "kaggle_submission_ref": "57938677",
+  "kaggle_delta_vs_200_epochs": -0.003
+}

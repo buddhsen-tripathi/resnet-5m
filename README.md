@@ -14,6 +14,7 @@ Our best Kaggle score comes from a **4,995,226-parameter pre-activation ResNet d
 |-----|---------------|----------|---------------|
 | `R6_base` | 97.25% | 97.26% | **0.898** |
 | `KD5_full_cutout` | 97.25% | 97.28% | 0.896 |
+| `R8_base_300` | 97.25% | 97.46% | 0.895 |
 | `KD5_full` | **97.49%** | **97.60%** | 0.893 |
 
 Gaps this small are a few images on the public leaderboard.
@@ -29,7 +30,7 @@ uv run python evaluate.py weights/R6_base.pt           # 97.26% with flip TTA
 uv run python predict.py --checkpoint weights/R6_base.pt
 ```
 
-`weights/KD_C_aug.pt`, the best model from rounds 1-3, is still there too.
+`weights/KD_C_aug.pt`, the best model from rounds 1-3, is still there too. The round 8 inference export is included at `weights/R8_base_300.pt` (97.46% with flip TTA, 0.895 Kaggle public).
 
 Weights are attached to two releases, and file names match the run names in the experiment tables below. The [v0.1 release](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.1) holds all 14 runs from rounds 1-3 (~19 MB each), and the [v0.2 release](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.2) holds 12 runs from rounds 4-7 (~20 MB each). The 60-epoch screening runs S0_C, S1_mid and S3_bneck are not included:
 
@@ -267,6 +268,33 @@ uv run python train.py $A --teacher $TEACHERS --zoom 0.75 1.33 --kd-alpha 0.7 --
 - Random zoom lowered both CIFAR-10 accuracy and the Kaggle score, so object size is not the main cause of the Kaggle gap.
 - Zoom TTA on R6_base also hurt, scoring 0.883.
 - With mild zoom, the softer KD weight added 0.14 pts on CIFAR-10 and +0.005 on Kaggle. That is suggestive, but one seed cannot separate it from leaderboard noise.
+
+### Round 8: training duration
+
+The `R6_base` recipe was trained from scratch for 300 epochs, with its cosine schedule extended across all 300. Architecture, ten teachers, augmentation and seed 1 were retained. The run used one H200, took 82.74 minutes of epoch time, and resumed from epoch 113 after the VM was stopped. Full logs and runtime details are in [`logs/8-duration/`](logs/8-duration/).
+
+```bash
+TEACHERS=(
+  checkpoints/S2_highres.pt checkpoints/KD_C_aug.pt
+  checkpoints/C_ta.pt checkpoints/C_mix.pt checkpoints/C_ta_mix.pt
+  checkpoints/C_ta_mix_noerase.pt checkpoints/A_nose_ta_mix.pt
+  checkpoints/S4_deep.pt checkpoints/KD5_full.pt checkpoints/KD5_full_cutout.pt
+)
+uv run python train.py --widths 128 192 232 --blocks 4 3 2 --no-se \
+  --autoaugment --mix 0.5 --erase-p 0 --cutout \
+  --teacher-flip --kd-alpha 0.9 --kd-temp 4 --label-smoothing 0.1 \
+  --epochs 300 --seed 1 --workers 3 \
+  --teacher "${TEACHERS[@]}" --out checkpoints/R8_base_300.pt
+```
+
+| run | epochs | no TTA | flip TTA | Kaggle public |
+|-----|--------|--------|----------|---------------|
+| R6_base | 200 | 97.26 | 97.26 | **0.898** |
+| R8_base_300 | 300 | 97.25 | **97.46** | 0.895 |
+
+Both checkpoints were re-evaluated in full precision on the H200 for this table; the original mixed-precision training evaluation reports R6_base at 97.25%. The additional epochs improved flip-TTA accuracy by 0.20 percentage points, but did not improve the public Kaggle score. This is one run on different hardware/software from the original Colab baseline, not evidence that longer training never helps.
+
+![R8 training loss and CIFAR-10 test accuracy across all 300 epochs](assets/8-duration.png)
 
 ## Kaggle notes
 

@@ -1,0 +1,2 @@
+weights/R6_base.pt: 0.9726 (no TTA)
+checkpoints/R8_base_300.pt: 0.9725 (no TTA)
