@@ -1,0 +1,64 @@
+{
+  "description": "Exact inference exports used for the round 8 and 9 Kaggle submissions; full resumable checkpoints remain in the local VM backup.",
+  "models": [
+    {
+      "run": "R8_base_300",
+      "round": 8,
+      "epoch": 300,
+      "file": "weights/R8_base_300.pt",
+      "sha256": "90628736ff5d984f716a6db3618a558f530410eecbb0f2b91db3494c36425ccf",
+      "source_checkpoint_sha256": "5ae7a7f1799decc4d4066827eec7eb8ba0e46ca71e7e0ca512b277618836e7d4",
+      "cfg": {
+        "widths": [
+          128,
+          192,
+          232
+        ],
+        "blocks": [
+          4,
+          3,
+          2
+        ],
+        "se": false,
+        "block": "basic",
+        "drop_path": 0.0
+      },
+      "inference_parameters": 4995226,
+      "cifar10_raw": 0.9725,
+      "cifar10_flip": 0.9746,
+      "kaggle_public": 0.895,
+      "tta": "horizontal flip only",
+      "resumable": false
+    },
+    {
+      "run": "R9_combined",
+      "round": 9,
+      "epoch": 200,
+      "file": "weights/R9_combined.pt",
+      "sha256": "7c3359bf6b046dd5de4670743512725bc0145b89c6542baf9abcde4330c2b4cd",
+      "source_checkpoint_sha256": "97ee06f135c4702e75bdd33f4e75150a76d57b137e09f4119a84f992c3b1260f",
+      "cfg": {
+        "widths": [
+          128,
+          192,
+          228
+        ],
+        "blocks": [
+          4,
+          3,
+          2
+        ],
+        "se": false,
+        "block": "basic",
+        "drop_path": 0.0
+      },
+      "inference_parameters": 4937794,
+      "cifar10_raw": 0.9754,
+      "cifar10_flip": 0.977,
+      "kaggle_public": 0.901,
+      "tta": "horizontal flip only",
+      "resumable": false,
+      "total_training_parameters": 4983618
+    }
+  ]
+}

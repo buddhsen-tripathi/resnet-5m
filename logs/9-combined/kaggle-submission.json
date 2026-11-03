@@ -1,0 +1,33 @@
+{
+  "run": "R9_combined",
+  "epoch": 200,
+  "rows": 2000,
+  "local_agreement": "842/842",
+  "class_counts": {
+    "6": 188,
+    "3": 211,
+    "9": 195,
+    "2": 203,
+    "8": 195,
+    "4": 200,
+    "0": 174,
+    "1": 221,
+    "7": 201,
+    "5": 212
+  },
+  "submission_sha256": "250455cfce6f423ea8fbecc5a00ba94e4fc56de485757d2d87093568455c5e4a",
+  "checkpoint_sha256": "7c3359bf6b046dd5de4670743512725bc0145b89c6542baf9abcde4330c2b4cd",
+  "kernel": "btr1pathi/cnn-maxxxing-predict",
+  "kernel_version": 5,
+  "dataset_version": 5,
+  "competition": "cifar-10-res-net-architecture-challenge-dl",
+  "submission": {
+    "ref": "57943548",
+    "fileName": "submission_R9_combined.csv",
+    "date": "2026-11-03 10:14:32.843000",
+    "description": "R9_combined: 200 epochs from scratch, seed 1; 4,937,794 inference parameters, 4,983,618 total training parameters; 10 frozen teachers, KD alpha 0.7, no label smoothing, AugMix, 8px Cutout, supervised contrastive weight 0.1. Flip TTA; CIFAR-10 97.54% raw and 97.70% flip.",
+    "status": "SubmissionStatus.COMPLETE",
+    "publicScore": "0.90100",
+    "privateScore": ""
+  }
+}

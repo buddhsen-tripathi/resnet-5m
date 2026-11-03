@@ -1,0 +1,67 @@
+{
+  "experiment": "R9_combined",
+  "status": "complete",
+  "epochs": 200,
+  "seed": 1,
+  "batch_size": 256,
+  "student_cfg": {
+    "widths": [
+      128,
+      192,
+      228
+    ],
+    "blocks": [
+      4,
+      3,
+      2
+    ],
+    "se": false,
+    "block": "basic",
+    "drop_path": 0.0
+  },
+  "classifier_parameters": 4937794,
+  "projection_parameters": 45824,
+  "total_trainable_parameters": 4983618,
+  "projection_head": {
+    "hidden": 128,
+    "output": 128,
+    "used_at_inference": false
+  },
+  "augmentation": {
+    "augmix": true,
+    "augmix_severity": 3,
+    "cutout_size": 8,
+    "cutout_probability": 1,
+    "mix_probability": 0.5,
+    "random_crop_padding": 4,
+    "horizontal_flip": true
+  },
+  "objective": {
+    "kd_alpha": 0.7,
+    "kd_temperature": 4.0,
+    "teacher_flip": true,
+    "label_smoothing": 0.0,
+    "supcon_weight": 0.1,
+    "supcon_temperature": 0.07,
+    "contrastive_views": 2,
+    "contrastive_labels": "original unmixed labels",
+    "separate_augmix_js_loss": false
+  },
+  "teacher_count": 10,
+  "learning_rate": 0.2,
+  "warmup_epochs": 5,
+  "weight_decay": 0.0005,
+  "workers": 8,
+  "interpretation": "Combined recipe, not an individual ablation. Last-stage width reduced from 232 to 228 to fit the training projection head under 5M.",
+  "source_revision": "8db81cbb1fdee8c3b5d767fd5a08f54b0f5ccdde",
+  "source_sha256": {
+    "model.py": "90d4aa43797a23546d7b85f5fe823bfeeea285b1c2562d11b4aa21ed56cab36c",
+    "train.py": "316bce56e60efa8dc11bb81a71bbfbce073cb5e426ffc28d16f6e5a78af6a9dd",
+    "predict.py": "3a9ba993524c251b22777b435f0ae9d9e420e8a3cdd29052b7a5a6f20063eb63",
+    "evaluate.py": "35ffe3c76558e26c7b44a4bd5c5f4222321915714d70d184572b5443b5286a53",
+    "tests/test_training.py": "54a5d884f998762145b1a2f004eba888c8d353ca558756477dd42b6c73f69d45"
+  },
+  "resume_note": "CPU and CUDA RNG states are saved. Worker augmentation RNG streams are not restored bit-for-bit with persistent workers.",
+  "started_utc": "2026-11-03T08:34:00Z",
+  "completed_utc": "2026-11-03T09:46:54Z"
+}
