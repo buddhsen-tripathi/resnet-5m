@@ -1,0 +1,27 @@
+{
+  "matplotlib": "3.11.2",
+  "figures": [
+    {
+      "run": "R8_base_300",
+      "source": "logs/8-duration/R8_base_300.log",
+      "figure": "assets/8-duration.png",
+      "epochs": 300,
+      "transformations": [
+        "accuracy multiplied by 100",
+        "no smoothing"
+      ],
+      "notes": "Single run; per-epoch mixed-precision evaluation, not final full-precision flip TTA."
+    },
+    {
+      "run": "R9_combined",
+      "source": "logs/9-combined/R9_combined.log",
+      "figure": "assets/9-combined.png",
+      "epochs": 200,
+      "transformations": [
+        "accuracy multiplied by 100",
+        "no smoothing"
+      ],
+      "notes": "Single run; per-epoch mixed-precision evaluation, not final full-precision flip TTA."
+    }
+  ]
+}

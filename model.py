@@ -102,10 +102,15 @@ class ResNet(nn.Module):
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
 
-    def forward(self, x):
+    def forward_features(self, x):
         x = self.layers(self.stem((x - self.mean) / self.std))
         x = F.relu(self.bn(x))
-        return self.fc(torch.flatten(F.adaptive_avg_pool2d(x, 1), 1))
+        return torch.flatten(F.adaptive_avg_pool2d(x, 1), 1)
+
+    def forward(self, x, return_features=False):
+        features = self.forward_features(x)
+        logits = self.fc(features)
+        return (logits, features) if return_features else logits
 
 
 def zoom_view(x, factor):

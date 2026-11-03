@@ -26,10 +26,15 @@ def get_args():
     p.add_argument("--wd", type=float, default=5e-4)
     p.add_argument("--warmup-epochs", type=int, default=5)
     p.add_argument("--label-smoothing", type=float, default=0.1)
-    p.add_argument("--autoaugment", action="store_true", help="add TrivialAugmentWide")
+    augmentation = p.add_mutually_exclusive_group()
+    augmentation.add_argument("--autoaugment", action="store_true", help="add TrivialAugmentWide")
+    augmentation.add_argument("--augmix", action="store_true", help="use AugMix transforms (without a separate JS loss)")
     p.add_argument("--mix", type=float, default=0.0, help="probability of applying CutMix or MixUp to a batch")
     p.add_argument("--erase-p", type=float, default=0.5, help="RandomErasing (cutout) probability")
-    p.add_argument("--cutout", action="store_true", help="erase a 16x16 square from every image (overrides --erase-p)")
+    p.add_argument("--cutout", action="store_true", help="erase a fixed square from every image (overrides --erase-p)")
+    p.add_argument("--cutout-size", type=int, default=16, help="Cutout square side in pixels (1-31)")
+    p.add_argument("--supcon", type=float, default=0.0, help="weight of supervised contrastive loss on two unmixed views")
+    p.add_argument("--supcon-temp", type=float, default=0.07)
     p.add_argument("--zoom", type=float, nargs=2, metavar=("MIN", "MAX"), help="random scale range, at least 0.5")
     p.add_argument("--drop-path", type=float, default=0.0, help="stochastic depth rate of the last block")
     p.add_argument("--ema", type=float, default=0.0, help="weight EMA decay per step; evaluates and saves the EMA model")
@@ -44,7 +49,39 @@ def get_args():
     p.add_argument("--data-dir", default="data")
     p.add_argument("--out", default="checkpoints/model.pt")
     p.add_argument("--resume", action="store_true", help="continue from --out if it exists (e.g. after preemption)")
-    return p.parse_args()
+    args = p.parse_args()
+    if not 1 <= args.cutout_size <= 31:
+        p.error("--cutout-size must be between 1 and 31")
+    if args.supcon < 0 or args.supcon_temp <= 0:
+        p.error("--supcon must be nonnegative and --supcon-temp must be positive")
+    return args
+
+
+class TwoViews:
+    """Independent augmentations of one image, retaining its original class label."""
+
+    def __init__(self, transform):
+        self.transform = transform
+
+    def __call__(self, image):
+        return self.transform(image), self.transform(image)
+
+
+def supervised_contrastive_loss(features, labels, temperature=0.07):
+    """SupCon (Khosla et al., 2020) on [batch, views, features], excluding self-pairs."""
+    if features.ndim != 3 or features.size(1) < 2 or labels.ndim != 1 or len(labels) != len(features):
+        raise ValueError("SupCon requires at least two views per image and one original label per image")
+    if temperature <= 0:
+        raise ValueError("SupCon temperature must be positive")
+    with torch.autocast(features.device.type, enabled=False):
+        z = F.normalize(features.float(), dim=-1).flatten(0, 1)
+        classes = labels.repeat_interleave(features.size(1))
+        self_pairs = torch.eye(len(z), dtype=torch.bool, device=z.device)
+        positives = classes[:, None].eq(classes[None, :]) & ~self_pairs
+        similarities = (z @ z.T) / temperature
+        normalizer = torch.logsumexp(similarities.masked_fill(self_pairs, -torch.inf), dim=1, keepdim=True)
+        log_prob = similarities - normalizer
+        return -((log_prob * positives).sum(1) / positives.sum(1)).mean()
 
 
 def loaders(args):
@@ -55,9 +92,13 @@ def loaders(args):
         aug = [T.Pad(16, padding_mode="reflect"), scale, T.CenterCrop(32)] + aug
     if args.autoaugment:
         aug.append(T.TrivialAugmentWide())
-    erase = dict(p=1.0, scale=(0.25, 0.25), ratio=(1, 1)) if args.cutout else dict(p=args.erase_p, scale=(0.02, 0.2))
+    if args.augmix:
+        aug.append(T.AugMix())
+    area = (args.cutout_size / 32) ** 2
+    erase = dict(p=1.0, scale=(area, area), ratio=(1, 1)) if args.cutout else dict(p=args.erase_p, scale=(0.02, 0.2))
     aug += [T.ToTensor(), T.RandomErasing(value=0.5, **erase)]
-    train = datasets.CIFAR10(args.data_dir, train=True, download=True, transform=T.Compose(aug))
+    transform = T.Compose(aug)
+    train = datasets.CIFAR10(args.data_dir, train=True, download=True, transform=TwoViews(transform) if args.supcon else transform)
     # The official CIFAR-10 test split is used only to monitor generalization, never for training.
     test = datasets.CIFAR10(args.data_dir, train=False, download=True, transform=T.ToTensor())
     kw = dict(num_workers=args.workers, pin_memory=True, persistent_workers=args.workers > 0)
@@ -93,8 +134,11 @@ def main():
 
     cfg = dict(widths=args.widths, blocks=args.blocks, se=args.se, block=args.block, drop_path=args.drop_path)
     model = ResNet(**cfg).to(device, memory_format=torch.channels_last)
-    n_params = count_params(model)
+    projector = nn.Sequential(nn.Linear(args.widths[-1], 128), nn.ReLU(), nn.Linear(128, 128)).to(device) if args.supcon else None
+    n_params = count_params(model) + (count_params(projector) if projector is not None else 0)
     print(f"params: {n_params:,}")
+    if projector is not None:
+        print(f"classifier: {count_params(model):,}; training-only projection head: {count_params(projector):,}")
     assert n_params <= MAX_PARAMS, f"model has {n_params:,} params, limit is {MAX_PARAMS:,}"
     net = torch.compile(model) if args.compile else model
     ema = None
@@ -106,8 +150,9 @@ def main():
 
     train_loader, test_loader = loaders(args)
     # No weight decay on BN and bias parameters.
-    decay = [p for p in model.parameters() if p.ndim > 1]
-    no_decay = [p for p in model.parameters() if p.ndim <= 1]
+    parameters = list(model.parameters()) + (list(projector.parameters()) if projector is not None else [])
+    decay = [p for p in parameters if p.ndim > 1]
+    no_decay = [p for p in parameters if p.ndim <= 1]
     opt = torch.optim.SGD(
         [{"params": decay, "weight_decay": args.wd}, {"params": no_decay, "weight_decay": 0}],
         lr=args.lr, momentum=0.9, nesterov=True,
@@ -121,7 +166,7 @@ def main():
     teachers = []
     for path in args.teacher:
         t = torch.load(path, map_location=device)
-        teachers.append(ResNet(**t["cfg"]).to(device, memory_format=torch.channels_last).eval())
+        teachers.append(ResNet(**t["cfg"]).to(device, memory_format=torch.channels_last).eval().requires_grad_(False))
         teachers[-1].load_state_dict(t["model"])
 
     out = Path(args.out)
@@ -129,20 +174,39 @@ def main():
     start = 0
     if args.resume and out.exists():
         ckpt = torch.load(out, map_location=device)
+        saved_cfg = {"block": "basic", "drop_path": 0.0, **ckpt["cfg"]}
+        saved_cfg["widths"], saved_cfg["blocks"] = list(saved_cfg["widths"]), list(saved_cfg["blocks"])
+        assert saved_cfg == cfg, "resume requires the checkpoint's model configuration"
+        assert ("projector" in ckpt) == (projector is not None), "resume requires the original --supcon setting"
+        if "train_args" in ckpt:
+            runtime_options = {"out", "resume", "workers", "compile", "data_dir"}
+            for key, value in vars(args).items():
+                if key not in runtime_options:
+                    assert ckpt["train_args"][key] == value, f"resume requires the original --{key.replace('_', '-')}"
         model.load_state_dict(ckpt.get("raw", ckpt["model"]))
+        if projector is not None:
+            projector.load_state_dict(ckpt["projector"])
         if ema:
             ema.load_state_dict(ckpt["ema"])
         opt.load_state_dict(ckpt["opt"])
         sched.load_state_dict(ckpt["sched"])
         if "scaler" in ckpt:
             scaler.load_state_dict(ckpt["scaler"])
+        if "rng" in ckpt:
+            torch.set_rng_state(ckpt["rng"].cpu())
+        if device.type == "cuda" and "cuda_rng" in ckpt:
+            torch.cuda.set_rng_state_all([state.cpu() for state in ckpt["cuda_rng"]])
         start = ckpt["epoch"]
         print(f"resumed from {out} at epoch {start}")
     for epoch in range(start, args.epochs):
         net.train()
         t0, loss_sum = time.time(), torch.zeros((), device=device)
+        classification_sum, contrastive_sum = torch.zeros((), device=device), torch.zeros((), device=device)
         for x, y in train_loader:
-            x, y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
+            y = y.to(device, non_blocking=True)
+            views = [view.to(device, non_blocking=True) for view in x] if projector is not None else None
+            original_labels = y.clone() if views is not None else None
+            x = views[0].clone() if views is not None else x.to(device, non_blocking=True)
             if torch.rand(()) < args.mix:
                 x, y = mix(x, y)  # y becomes soft labels
             x = x.contiguous(memory_format=torch.channels_last)
@@ -156,20 +220,29 @@ def main():
 
             def compute_loss():
                 with torch.autocast(device.type, amp_dtype, enabled=amp):
-                    logits = net(x)
+                    contrastive = torch.zeros((), device=device)
+                    if views is None:
+                        logits = net(x)
+                    else:
+                        all_logits, features = net(torch.cat([x, *views]), return_features=True)
+                        logits = all_logits[:len(x)]
+                        embeddings = projector(features[len(x):]).reshape(2, len(x), -1).transpose(0, 1)
+                        contrastive = supervised_contrastive_loss(embeddings, original_labels, args.supcon_temp)
                     loss = criterion(logits, y)
                     if target is not None:
                         T = args.kd_temp
                         kd = F.kl_div(F.log_softmax(logits.float() / T, 1), F.softmax(target / T, 1), reduction="batchmean")
                         loss = args.kd_alpha * kd * T * T + (1 - args.kd_alpha) * loss
-                return loss
+                    classification = loss
+                    loss = classification + args.supcon * contrastive
+                return loss, classification.detach(), contrastive.detach()
 
-            loss = compute_loss()
+            loss, classification, contrastive = compute_loss()
             opt.zero_grad(set_to_none=True)
             scaler.scale(loss).backward()
             if args.sam:
                 # SAM (Foret et al., 2021): take the gradient at the worst nearby weights, then step from the original ones.
-                params = [p for p in model.parameters() if p.grad is not None]
+                params = [p for p in parameters if p.grad is not None]
                 scale = args.sam / (torch.stack([p.grad.norm() for p in params]).norm() + 1e-12)
                 perturb = [p.grad * scale for p in params]
                 with torch.no_grad():
@@ -177,7 +250,7 @@ def main():
                 for m in bns:
                     m.momentum = 0  # the batch was already counted in the BN statistics
                 opt.zero_grad(set_to_none=True)
-                compute_loss().backward()
+                compute_loss()[0].backward()
                 for m in bns:
                     m.momentum = 0.1
                 with torch.no_grad():
@@ -188,11 +261,21 @@ def main():
             if ema:
                 ema.update_parameters(model)
             loss_sum += loss.detach()
+            classification_sum += classification
+            contrastive_sum += contrastive
         acc = evaluate(ema if ema else net, test_loader, device, amp, amp_dtype)
         print(f"epoch {epoch + 1}/{args.epochs}  loss {loss_sum.item() / len(train_loader):.4f}  "
               f"test_acc {acc:.4f}  lr {sched.get_last_lr()[0]:.4f}  {time.time() - t0:.1f}s", flush=True)
+        if projector is not None:
+            print(f"  classification_kd {classification_sum.item() / len(train_loader):.4f}  "
+                  f"supcon {contrastive_sum.item() / len(train_loader):.4f}", flush=True)
         state = {"model": (ema.module if ema else model).state_dict(), "cfg": cfg, "opt": opt.state_dict(), "sched": sched.state_dict(),
-                 "scaler": scaler.state_dict(), "epoch": epoch + 1, "test_acc": acc}
+                 "scaler": scaler.state_dict(), "epoch": epoch + 1, "test_acc": acc, "train_args": vars(args), "trainable_params": n_params,
+                 "rng": torch.get_rng_state()}
+        if projector is not None:
+            state["projector"] = projector.state_dict()
+        if device.type == "cuda":
+            state["cuda_rng"] = torch.cuda.get_rng_state_all()
         if ema:
             state |= {"raw": model.state_dict(), "ema": ema.state_dict()}
         torch.save(state, out.with_suffix(".tmp"))

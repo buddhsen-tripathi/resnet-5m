@@ -1,0 +1,35 @@
+{
+  "experiment": "R9_combined",
+  "status": "complete",
+  "epochs": 200,
+  "completed_utc": "2026-11-03T09:46:54Z",
+  "evaluation": {
+    "R6_base": {
+      "raw": 0.9726,
+      "flip": 0.9726
+    },
+    "R8_base_300": {
+      "raw": 0.9725,
+      "flip": 0.9746
+    },
+    "R9_combined": {
+      "raw": 0.9754,
+      "flip": 0.977
+    }
+  },
+  "kaggle_submission": {
+    "ref": "57943548",
+    "fileName": "submission_R9_combined.csv",
+    "date": "2026-11-03 10:14:32.843000",
+    "description": "R9_combined: 200 epochs from scratch, seed 1; 4,937,794 inference parameters, 4,983,618 total training parameters; 10 frozen teachers, KD alpha 0.7, no label smoothing, AugMix, 8px Cutout, supervised contrastive weight 0.1. Flip TTA; CIFAR-10 97.54% raw and 97.70% flip.",
+    "status": "SubmissionStatus.COMPLETE",
+    "publicScore": "0.90100",
+    "privateScore": ""
+  },
+  "best_training_evaluation": 0.9757,
+  "epoch_time_minutes": 72.47,
+  "trainable_parameters": 4983618,
+  "checkpoint": "checkpoints/R9_combined.pt",
+  "backup_directory": ".context/vm-backup-2026-11-03/",
+  "kaggle_public_score": 0.901
+}
