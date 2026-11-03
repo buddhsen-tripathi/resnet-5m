@@ -69,6 +69,8 @@ gh release download v0.1 -p '*.pt' -D checkpoints     # rounds 1–3
 
 Each file is named after its run and contains the student weights and model configuration (~19–20 MB). These exports load in `evaluate.py`, `predict.py` and as distillation teachers (`--teacher`); resuming requires a full training checkpoint with optimizer state. R9's training-only projection head is omitted from its inference export. The exact R8/R9 Kaggle exports and SHA-256 checksums are recorded in [`weights/round8-9.json`](weights/round8-9.json), also attached to v0.3. The 60-epoch architecture screens are not release assets.
 
+[v0.3 release notes](docs/releases/v0.3.md) include the two run summaries, inference commands and checkpoint limitations.
+
 ## Usage
 
 ```bash
