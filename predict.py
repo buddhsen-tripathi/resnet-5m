@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from PIL import Image
 
-from model import ResNet, tta_logits
+from model import ResNet, adapt_batchnorm, tta_logits
 
 
 @torch.no_grad()
@@ -16,6 +16,8 @@ def main():
     p.add_argument("--checkpoint", default="checkpoints/model.pt")
     p.add_argument("--out", default="submission.csv")
     p.add_argument("--shift", type=int, default=0, help="also average over translations of this many pixels")
+    p.add_argument("--bn-adapt", type=float, default=0.0,
+                   help="blend BatchNorm statistics with the test images' (1 = test images only)")
     p.add_argument("--zoom", type=float, nargs="*", default=[], help="also average over these scale factors")
     args = p.parse_args()
 
@@ -29,6 +31,9 @@ def main():
     rows = list(csv.DictReader(open(data / "test.csv")))
     imgs = np.stack([np.asarray(Image.open(data / "test_images" / r["filename"]).convert("RGB")) for r in rows])
     x = torch.from_numpy(imgs).permute(0, 3, 1, 2).float() / 255
+
+    if args.bn_adapt:
+        adapt_batchnorm(model, x, args.bn_adapt)
 
     preds = []
     for batch in x.split(1024):

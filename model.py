@@ -136,5 +136,29 @@ def tta_logits(model, x, shift=0, zooms=()):
     return sum(model(v) + model(v.flip(3)) for v in views) / (2 * len(views))
 
 
+@torch.no_grad()
+def adapt_batchnorm(model, images, weight=1.0, batch_size=500):
+    """Blend BatchNorm statistics with those of unlabeled `images` and their flips (Schneider et al., 2020).
+
+    weight 1 uses only the new images, 0 keeps the training statistics. No weights are changed.
+    """
+    device = next(model.parameters()).device
+    bns = [m for m in model.modules() if isinstance(m, nn.BatchNorm2d)]
+    source = [(m.running_mean.clone(), m.running_var.clone()) for m in bns]
+    for m in bns:
+        m.reset_running_stats()
+        m.momentum = None  # cumulative average over all batches below
+        m.train()
+    for batch in images.split(batch_size):
+        batch = batch.to(device)
+        model(batch)
+        model(batch.flip(3))
+    for m, (mean, var) in zip(bns, source):
+        m.running_mean.lerp_(mean, 1 - weight)
+        m.running_var.lerp_(var, 1 - weight)
+        m.momentum = 0.1
+        m.eval()
+
+
 def count_params(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
