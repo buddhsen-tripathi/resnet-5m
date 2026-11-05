@@ -1,12 +1,14 @@
 import argparse
 import math
 import os
+import random
 import time
 from pathlib import Path
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from PIL import ImageChops, ImageFilter, ImageOps
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms as T
 from torchvision.transforms import v2
@@ -32,6 +34,7 @@ def get_args():
     p.add_argument("--mix", type=float, default=0.0, help="probability of applying CutMix or MixUp to a batch")
     p.add_argument("--erase-p", type=float, default=0.5, help="RandomErasing (cutout) probability")
     p.add_argument("--cutout", action="store_true", help="erase a fixed square from every image (overrides --erase-p)")
+    p.add_argument("--sketch", type=float, default=0.0, help="probability of redrawing an image as a sketch, cartoon or grayscale")
     p.add_argument("--cutout-size", type=int, default=16, help="Cutout square side in pixels (1-31)")
     p.add_argument("--supcon", type=float, default=0.0, help="weight of supervised contrastive loss on two unmixed views")
     p.add_argument("--supcon-temp", type=float, default=0.07)
@@ -55,6 +58,25 @@ def get_args():
     if args.supcon < 0 or args.supcon_temp <= 0:
         p.error("--supcon must be nonnegative and --supcon-temp must be positive")
     return args
+
+
+class DrawingStyle:
+    """With probability p, redraw a training image as an edge sketch, a cartoon or grayscale, so drawings look familiar."""
+
+    def __init__(self, p):
+        self.p = p
+
+    def __call__(self, image):
+        if random.random() >= self.p:
+            return image
+        style = random.randrange(3)
+        if style == 0:
+            return image.convert("L").convert("RGB")
+        edges = image.convert("L").filter(ImageFilter.FIND_EDGES)
+        if style == 1:
+            return ImageOps.autocontrast(ImageOps.invert(edges)).convert("RGB")  # dark lines on white
+        lines = edges.point(lambda v: 255 if v < 40 else 0).convert("RGB")
+        return ImageChops.darker(ImageOps.posterize(image, 2), lines)  # flat colors with outlines
 
 
 class TwoViews:
@@ -90,6 +112,8 @@ def loaders(args):
         # Reflect padding first, so zooming out never shows empty borders.
         scale = T.RandomAffine(0, scale=args.zoom, interpolation=T.InterpolationMode.BILINEAR)
         aug = [T.Pad(16, padding_mode="reflect"), scale, T.CenterCrop(32)] + aug
+    if args.sketch:
+        aug.append(DrawingStyle(args.sketch))
     if args.autoaugment:
         aug.append(T.TrivialAugmentWide())
     if args.augmix:
