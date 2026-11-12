@@ -6,3 +6,4 @@ checkpoints/
 .context/
 .kaggle/
 slurm-*.out
+hpc/
