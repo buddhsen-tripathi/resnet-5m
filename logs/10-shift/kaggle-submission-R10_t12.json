@@ -35,8 +35,7 @@
     "date": "2026-11-05 23:17:53.230000",
     "description": "R10_t12 (control): R9 recipe (S2 128-192-228/4-3-2, AugMix, 8px Cutout, KD 0.7/T4, SupCon 0.1) + 12 teachers (R9's ten + R8_base_300 + R9_combined); no shift augmentation; 200 ep, seed 1; 4,937,794 params. Flip TTA; CIFAR-10 97.51% raw, 97.59% flip.",
     "status": "SubmissionStatus.COMPLETE",
-    "publicScore": "0.90100",
-    "privateScore": "0.86200"
+    "publicScore": "0.90100"
   },
   "submission_record_retrieved": "2026-11-12"
 }

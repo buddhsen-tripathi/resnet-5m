@@ -17,7 +17,6 @@
     "Missing Kaggle scores mean no recorded submission for that checkpoint and protocol.",
     "Seeds, hardware, augmentation and teachers vary across rounds; these are individual runs, not controlled comparisons or multi-seed estimates.",
     "The public leaderboard scores 1,000 images (50%); the other 1,000 form the private split.",
-    "Parameter counts refer to the inference classifier. R9, R10 and R11 also train a 45,824-parameter projection head; their totals remain below 5M.",
-    "Round 10 and 11 checkpoints are not release assets; R10_t12's inference export is in weights/."
+    "Parameter counts refer to the inference classifier. R9, R10 and R11 also train a 45,824-parameter projection head; their totals remain below 5M."
   ]
 }
