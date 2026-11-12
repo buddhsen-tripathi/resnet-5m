@@ -1,0 +1,10 @@
+weights/R9_combined.pt: 0.9770
+checkpoints/R11_wide.pt: 0.9756
+checkpoints/T_wide_s1.pt: 0.9786
+checkpoints/T_wide_s2.pt: 0.9785
+ensemble of 4: 0.9805
+wrote 2000 predictions to submission_R11_wide.csv
+70fc3b54c67495eb7ef96900e79ccd1dbd56574bf3d23f9ea3d22a37821ae9a1  checkpoints/R11_wide.pt
+f92ce2801fb3fc391f70f4732d254bdf85fbd9226a5a1e44f355087824fb30ab  checkpoints/T_wide_s1.pt
+8293ed7ea5ec93d3c2847ec1ae781b67cb0fe7f79306f83a96b3b5b9679714be  checkpoints/T_wide_s2.pt
+c6120221e4622da565420abe40db501b64caea8f9650a9f9341e455f7a35e226  submission_R11_wide.csv
