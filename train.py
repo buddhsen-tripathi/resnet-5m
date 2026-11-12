@@ -7,6 +7,7 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from PIL import Image
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms as T
 from torchvision.transforms import v2
@@ -36,6 +37,12 @@ def get_args():
     p.add_argument("--supcon", type=float, default=0.0, help="weight of supervised contrastive loss on two unmixed views")
     p.add_argument("--supcon-temp", type=float, default=0.07)
     p.add_argument("--zoom", type=float, nargs=2, metavar=("MIN", "MAX"), help="random scale range, at least 0.5")
+    p.add_argument("--resample", type=float, default=0.0,
+                   help="probability of upscaling then downscaling each image with random filters")
+    p.add_argument("--resample-size", type=int, nargs=2, default=[48, 64], metavar=("MIN", "MAX"),
+                   help="intermediate side length range for --resample")
+    p.add_argument("--jitter", type=float, default=0.0, help="brightness and contrast jitter strength")
+    p.add_argument("--jitter-p", type=float, default=0.5, help="probability of applying --jitter")
     p.add_argument("--drop-path", type=float, default=0.0, help="stochastic depth rate of the last block")
     p.add_argument("--ema", type=float, default=0.0, help="weight EMA decay per step; evaluates and saves the EMA model")
     p.add_argument("--sam", type=float, default=0.0, help="SAM neighborhood size rho (about 2x the compute)")
@@ -49,12 +56,26 @@ def get_args():
     p.add_argument("--data-dir", default="data")
     p.add_argument("--out", default="checkpoints/model.pt")
     p.add_argument("--resume", action="store_true", help="continue from --out if it exists (e.g. after preemption)")
+    p.add_argument("--allow-over-budget", action="store_true",
+                   help="train a teacher above the 5M student limit (never a submission candidate)")
     args = p.parse_args()
     if not 1 <= args.cutout_size <= 31:
         p.error("--cutout-size must be between 1 and 31")
     if args.supcon < 0 or args.supcon_temp <= 0:
         p.error("--supcon must be nonnegative and --supcon-temp must be positive")
+    if not 0 <= args.resample <= 1 or not 32 <= args.resample_size[0] <= args.resample_size[1]:
+        p.error("--resample must be in [0, 1] and --resample-size must satisfy 32 <= MIN <= MAX")
+    if args.jitter < 0 or not 0 <= args.jitter_p <= 1:
+        p.error("--jitter must be nonnegative and --jitter-p must be in [0, 1]")
     return args
+
+
+def check_budget(n_params, allow_over_budget=False):
+    """Students must fit the 5M budget; a teacher may exceed it only when asked explicitly."""
+    if n_params > MAX_PARAMS and not allow_over_budget:
+        raise AssertionError(f"model has {n_params:,} params, limit is {MAX_PARAMS:,} (teachers: --allow-over-budget)")
+    if n_params > MAX_PARAMS:
+        print(f"over-budget teacher: {n_params:,} params; this checkpoint must not be submitted as a student")
 
 
 class TwoViews:
@@ -65,6 +86,27 @@ class TwoViews:
 
     def __call__(self, image):
         return self.transform(image), self.transform(image)
+
+
+class RandomResample:
+    """Upscale, then downscale back with independently chosen filters.
+
+    Imitates images that reached 32x32 through a different resizing pipeline than CIFAR-10's.
+    """
+
+    FILTERS = (Image.NEAREST, Image.BILINEAR, Image.BICUBIC, Image.LANCZOS, Image.BOX, Image.HAMMING)
+
+    def __init__(self, p, size_range=(48, 64)):
+        self.p, self.size_range = p, size_range
+
+    def _filter(self):
+        return self.FILTERS[torch.randint(len(self.FILTERS), ()).item()]
+
+    def __call__(self, image):
+        if torch.rand(()).item() >= self.p:
+            return image
+        side = torch.randint(self.size_range[0], self.size_range[1] + 1, ()).item()
+        return image.resize((side, side), self._filter()).resize(image.size, self._filter())
 
 
 def supervised_contrastive_loss(features, labels, temperature=0.07):
@@ -90,6 +132,10 @@ def loaders(args):
         # Reflect padding first, so zooming out never shows empty borders.
         scale = T.RandomAffine(0, scale=args.zoom, interpolation=T.InterpolationMode.BILINEAR)
         aug = [T.Pad(16, padding_mode="reflect"), scale, T.CenterCrop(32)] + aug
+    if args.jitter:
+        aug.insert(0, T.RandomApply([T.ColorJitter(brightness=args.jitter, contrast=args.jitter)], p=args.jitter_p))
+    if args.resample:
+        aug.insert(0, RandomResample(args.resample, tuple(args.resample_size)))
     if args.autoaugment:
         aug.append(T.TrivialAugmentWide())
     if args.augmix:
@@ -139,7 +185,7 @@ def main():
     print(f"params: {n_params:,}")
     if projector is not None:
         print(f"classifier: {count_params(model):,}; training-only projection head: {count_params(projector):,}")
-    assert n_params <= MAX_PARAMS, f"model has {n_params:,} params, limit is {MAX_PARAMS:,}"
+    check_budget(n_params, args.allow_over_budget)
     net = torch.compile(model) if args.compile else model
     ema = None
     if args.ema:

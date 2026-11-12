@@ -2,12 +2,13 @@
 
 These commands train students from scratch. Download the teacher checkpoints from the [model releases](../README.md#model-weights) before running distillation. Bash and Zsh are supported. The commands preserve each round's recipe; seeds and hardware differ across rounds.
 
-Rounds 1–3 have per-epoch logs; rounds 4–7 also have Colab notebooks containing the original training code. Rounds 8–9 record the H200 runtime package versions and source hashes in their log directories. These records matter when comparing small accuracy differences across devices.
+Rounds 1–3 have per-epoch logs; rounds 4–7 also have Colab notebooks containing the original training code. Rounds 8–9 and 11 record the H200 runtime package versions and source hashes in their log directories; round 10 has a Colab notebook and per-epoch logs. These records matter when comparing small accuracy differences across devices.
 
 ```bash
 uv sync
 gh release download v0.1 -p '*.pt' -D checkpoints
 gh release download v0.2 -p '*.pt' -D checkpoints
+gh release download v0.3 -p '*.pt' -D checkpoints   # round 10 teachers
 ```
 
 ## Round 1: architecture
@@ -149,4 +150,60 @@ uv run python train.py --widths 128 192 228 --blocks 4 3 2 --no-se \
   --supcon 0.1 --supcon-temp 0.07 --teacher-flip --kd-alpha 0.7 --kd-temp 4 \
   --label-smoothing 0 --epochs 200 --seed 1 --workers 8 \
   --teacher "${TEACHERS[@]}" --out checkpoints/R9_combined.pt
+```
+
+## Round 10: twelve teachers and shift augmentation
+
+[Results and analysis](../README.md#round-10-twelve-teachers-and-shift-augmentation)
+
+The R9 recipe with R8_base_300 and R9_combined added as teachers (`gh release download v0.3 -p '*.pt' -D checkpoints`). The runs used [`notebooks/round10_shift.ipynb`](../notebooks/round10_shift.ipynb) on a Colab A100; [`hpc/round10.sh`](../hpc/round10.sh) submits the same two runs as Slurm jobs.
+
+```bash
+A=(--widths 128 192 228 --blocks 4 3 2 --no-se
+   --augmix --mix 0.5 --erase-p 0 --cutout --cutout-size 8
+   --supcon 0.1 --supcon-temp 0.07 --teacher-flip --kd-alpha 0.7 --kd-temp 4
+   --label-smoothing 0 --epochs 200 --seed 1 --workers 5)
+TEACHERS=(
+  checkpoints/S2_highres.pt checkpoints/KD_C_aug.pt
+  checkpoints/C_ta.pt checkpoints/C_mix.pt checkpoints/C_ta_mix.pt
+  checkpoints/C_ta_mix_noerase.pt checkpoints/A_nose_ta_mix.pt
+  checkpoints/S4_deep.pt checkpoints/KD5_full.pt checkpoints/KD5_full_cutout.pt
+  checkpoints/R8_base_300.pt checkpoints/R9_combined.pt
+)
+uv run python train.py "${A[@]}" --teacher "${TEACHERS[@]}" --out checkpoints/R10_t12.pt
+uv run python train.py "${A[@]}" --resample 0.5 --resample-size 48 64 --jitter 0.2 --jitter-p 0.5 \
+  --teacher "${TEACHERS[@]}" --out checkpoints/R10_shift.pt
+```
+
+## Round 11: wide teachers
+
+[Results and analysis](../README.md#round-11-wide-teachers)
+
+Two teachers above the 5M limit, trained from scratch on CIFAR-10 with `--allow-over-budget`, then the exact R9 student recipe with them added to the ten round 9 teachers. The H200 runner and its orchestration script are in [`logs/11-wide-teachers/`](../logs/11-wide-teachers/).
+
+```bash
+WIDE=(--widths 160 320 640 --blocks 4 4 4 --no-se --autoaugment --mix 0.5 --erase-p 0
+      --epochs 250 --workers 6 --allow-over-budget)
+uv run python train.py "${WIDE[@]}" --seed 1 --out checkpoints/T_wide_s1.pt
+uv run python train.py "${WIDE[@]}" --seed 2 --out checkpoints/T_wide_s2.pt
+
+TEACHERS=(
+  checkpoints/S2_highres.pt checkpoints/KD_C_aug.pt
+  checkpoints/C_ta.pt checkpoints/C_mix.pt checkpoints/C_ta_mix.pt
+  checkpoints/C_ta_mix_noerase.pt checkpoints/A_nose_ta_mix.pt
+  checkpoints/S4_deep.pt checkpoints/KD5_full.pt checkpoints/KD5_full_cutout.pt
+  checkpoints/T_wide_s1.pt checkpoints/T_wide_s2.pt
+)
+uv run python train.py --widths 128 192 228 --blocks 4 3 2 --no-se \
+  --augmix --mix 0.5 --erase-p 0 --cutout --cutout-size 8 \
+  --supcon 0.1 --supcon-temp 0.07 --teacher-flip --kd-alpha 0.7 --kd-temp 4 \
+  --label-smoothing 0 --epochs 200 --seed 1 --workers 8 \
+  --teacher "${TEACHERS[@]}" --out checkpoints/R11_wide.pt
+```
+
+Balanced decoding of an existing checkpoint (round 11 side experiment, no training):
+
+```bash
+uv run --with scipy python scripts/balance.py --check weights/R9_combined.pt
+uv run --with scipy python scripts/balance.py --checkpoint weights/R9_combined.pt --data-dir data/kaggle --out submission_R9_balanced.csv
 ```

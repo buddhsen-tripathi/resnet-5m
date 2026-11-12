@@ -1,0 +1,48 @@
+{
+  "round": 11,
+  "status": "complete",
+  "hardware": "one on-demand NVIDIA H200 (environment.txt); both teachers trained side by side, then the student",
+  "completed_utc": "2026-11-07T00:59:06Z",
+  "teachers": {
+    "architecture": "pre-activation ResNet, widths 160-320-640, blocks 4-4-4, no SE (WideResNet-28-10 scale)",
+    "parameters": 36688170,
+    "recipe": "round 2 augmentation (TrivialAugment, CutMix/MixUp 0.5, no erasing), no distillation, 250 epochs, --allow-over-budget",
+    "T_wide_s1": {
+      "seed": 1,
+      "final_training_evaluation": 0.9763,
+      "best_training_evaluation": 0.9768,
+      "flip_tta": 0.9786,
+      "epoch_time_minutes": 46.92
+    },
+    "T_wide_s2": {
+      "seed": 2,
+      "final_training_evaluation": 0.9765,
+      "best_training_evaluation": 0.9776,
+      "flip_tta": 0.9785,
+      "epoch_time_minutes": 46.91
+    },
+    "submission_candidate": false
+  },
+  "student": {
+    "run": "R11_wide",
+    "recipe": "exact R9 recipe; teachers are R9's ten plus T_wide_s1 and T_wide_s2",
+    "epochs": 200,
+    "seed": 1,
+    "trainable_parameters": 4983618,
+    "classifier_parameters": 4937794,
+    "final_training_evaluation": 0.9733,
+    "best_training_evaluation": 0.974,
+    "flip_tta": 0.9756,
+    "epoch_time_minutes": 89.04,
+    "median_epoch_seconds": 26.7,
+    "kaggle_ref": "58074591",
+    "kaggle_public": 0.894
+  },
+  "same_evaluation_R9_combined_flip": 0.977,
+  "ensemble_of_R9_R11_and_both_teachers_flip": 0.9805,
+  "notes": [
+    "train.py, tests/test_training.py and scripts/balance.py in this commit match the VM copies in vm-manifest.sha256.",
+    "The teacher logs begin with the CIFAR-10 download progress line.",
+    "Checkpoints are not in the repository: T_wide_s1/s2 are 280 MB training checkpoints and R11_wide a 38 MB training checkpoint; their SHA-256 values are in vm-manifest.sha256."
+  ]
+}

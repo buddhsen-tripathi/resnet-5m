@@ -1,0 +1,17 @@
+{
+  "ref": "58074591",
+  "fileName": "submission_R11_wide.csv",
+  "date": "2026-11-07 01:02:03.507000",
+  "description": "R11_wide: R9 recipe (S2 128-192-228/4-3-2, AugMix, 8px Cutout, KD 0.7/T4, SupCon 0.1), 12 teachers (R9's ten + two 36.7M wide ResNets trained from scratch on CIFAR-10, 250 ep); 200 ep, seed 1; 4,937,794 params. Flip TTA; CIFAR-10 97.33% raw, 97.56% flip.",
+  "status": "SubmissionStatus.COMPLETE",
+  "publicScore": "0.89400",
+  "privateScore": "0.87000",
+  "run": "R11_wide",
+  "rows": 2000,
+  "submission_sha256": "c6120221e4622da565420abe40db501b64caea8f9650a9f9341e455f7a35e226",
+  "checkpoint_sha256": "70fc3b54c67495eb7ef96900e79ccd1dbd56574bf3d23f9ea3d22a37821ae9a1",
+  "differs_from_R9_submission": "84/2000",
+  "differs_from_R10_t12_submission": "77/2000",
+  "competition": "cifar-10-res-net-architecture-challenge-dl",
+  "submission_record_retrieved": "2026-11-12"
+}

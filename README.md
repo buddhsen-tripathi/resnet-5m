@@ -8,19 +8,20 @@ Built for the [CIFAR-10 ResNet Architecture Challenge](https://www.kaggle.com/co
 
 **R9_combined is our best model: 90.1% Kaggle public accuracy and 97.70% CIFAR-10 accuracy with flip averaging.** Its classifier has 4,937,794 parameters; including the contrastive head used during training, the total is 4,983,618.
 
-We trained **28 single models across nine rounds**, exploring architecture, augmentation, distillation, regularization and training duration within the same 5M budget.
+We trained **31 single models across eleven rounds**, exploring architecture, augmentation, distillation, regularization, training duration and teacher strength within the same 5M budget.
 
 | Model | Main change | Classifier params | Epochs | CIFAR-10 test | Flip TTA | Kaggle public |
 |---|---|---:|---:|---:|---:|---:|
 | **R9_combined** | AugMix + smaller Cutout + softer KD + contrastive loss | **4,937,794** | 200 | **97.54%** | **97.70%** | **0.901** |
+| R10_t12 | R9 recipe with 12 teachers | 4,937,794 | 200 | 97.51% | 97.59% | **0.901** |
 | R6_base | Ten teachers + 16px Cutout | 4,995,226 | 200 | 97.25% | 97.26% | 0.898 |
 | KD5_full_cutout | Seven teachers + 16px Cutout | 4,995,226 | 200 | 97.25% | 97.28% | 0.896 |
 | R8_base_300 | R6 recipe, longer cosine schedule | 4,995,226 | 300 | 97.25% | 97.46% | 0.895 |
 | KD5_full | Seven teachers, no Cutout | 4,995,226 | 200 | 97.49% | 97.60% | 0.893 |
 
-![Comparison of all 28 completed models: classifier parameter counts, CIFAR-10 final and flip-averaged accuracy, and recorded Kaggle public accuracy. R9 leads both accuracy measures.](assets/all-models.png)
+![Comparison of all 31 completed models: classifier parameter counts, CIFAR-10 final and flip-averaged accuracy, and recorded Kaggle public accuracy. R9 leads both accuracy measures.](assets/all-models.png)
 
-[Full model table and checkpoint links](docs/model-comparison.md) · [Chart source data](assets/experiments.json). The chart excludes teacher ensembles, 60-epoch screening runs and alternative inference settings. Missing Kaggle scores mean no recorded submission for that checkpoint and protocol. CIFAR-10 results retain each run's recorded evaluation precision; R6's later full-precision re-evaluation gives 97.26% without TTA.
+[Full model table and checkpoint links](docs/model-comparison.md) · [Chart source data](assets/experiments.json). The chart excludes teacher ensembles, 60-epoch screening runs, round 11's over-budget teachers and alternative inference settings. Missing Kaggle scores mean no recorded submission for that checkpoint and protocol. CIFAR-10 results retain each run's recorded evaluation precision; R6's later full-precision re-evaluation gives 97.26% without TTA.
 
 ### What the experiments showed
 
@@ -28,6 +29,7 @@ We trained **28 single models across nine rounds**, exploring architecture, augm
 - **Augmentation and distillation helped:** stronger augmentation added 0.5–0.75 points in round 2; distillation with strong augmentation added another 0.2–0.5 in round 3.
 - **More training was not enough:** R8 improved flip-TTA accuracy over R6, but its Kaggle score fell from 0.898 to 0.895. The tested extra regularization and zoom recipes also fell short of R6.
 - **The combined recipe performed best:** R9 reached 0.901 at 200 epochs, up 0.003 over R6. This changes several ingredients together, so it does not isolate which ingredient caused the improvement.
+- **The R9 recipe then stopped improving:** two more teachers, shift-targeted augmentation and two 36.7M-parameter teachers all finished within 0.15 points of R9 on CIFAR-10 and at or below its Kaggle score. Balanced decoding of R9's predictions also scored lower.
 
 | Round | Question | Best Kaggle public | Run |
 |-------|----------|------------------------------------------|-----|
@@ -40,6 +42,8 @@ We trained **28 single models across nine rounds**, exploring architecture, augm
 | [7](#round-7-zoom-augmentation) | Zoom and distillation weight | 0.896 | `R7_zoom_a7` |
 | [8](#round-8-training-duration) | 200 vs. 300 epochs | 0.895 | `R8_base_300` |
 | [9](#round-9-combined-data-focused-recipe) | Combined data-focused recipe | **0.901** | `R9_combined` |
+| [10](#round-10-twelve-teachers-and-shift-augmentation) | Twelve teachers and shift augmentation | **0.901** | `R10_t12` |
+| [11](#round-11-wide-teachers) | Wide teachers above the student budget | 0.894 | `R11_wide` |
 
 Each configuration has one recorded seed. Recipes, teachers and hardware vary across rounds; the tables describe these experiments rather than establish universal rankings of training methods. Kaggle scores are public scores; the private leaderboard determines the final ranking.
 
@@ -53,7 +57,7 @@ uv run python evaluate.py weights/R9_combined.pt       # 97.70% with flip TTA
 uv run python predict.py --checkpoint weights/R9_combined.pt --out submission.csv
 ```
 
-Evaluation downloads CIFAR-10 automatically. Prediction needs the competition files in `data/kaggle/`; see [Kaggle notes](#kaggle-notes). Earlier baselines and the R8 duration experiment are also included in `weights/`.
+Evaluation downloads CIFAR-10 automatically. Prediction needs the competition files in `data/kaggle/`; see [Kaggle notes](#kaggle-notes). Earlier baselines, the R8 duration experiment and round 10's `R10_t12` are also included in `weights/`.
 
 | Release | Rounds | Models | Contents |
 |---|---|---:|---|
@@ -67,7 +71,7 @@ gh release download v0.2 -p '*.pt' -D checkpoints     # rounds 4–7
 gh release download v0.1 -p '*.pt' -D checkpoints     # rounds 1–3
 ```
 
-Each file is named after its run and contains the student weights and model configuration (~19–20 MB). These exports load in `evaluate.py`, `predict.py` and as distillation teachers (`--teacher`); resuming requires a full training checkpoint with optimizer state. R9's training-only projection head is omitted from its inference export. The exact R8/R9 Kaggle exports and SHA-256 checksums are recorded in [`weights/round8-9.json`](weights/round8-9.json), also attached to v0.3. The 60-epoch architecture screens are not release assets.
+Each file is named after its run and contains the student weights and model configuration (~19–20 MB). These exports load in `evaluate.py`, `predict.py` and as distillation teachers (`--teacher`); resuming requires a full training checkpoint with optimizer state. R9's training-only projection head is omitted from its inference export. The exact R8/R9 Kaggle exports and SHA-256 checksums are recorded in [`weights/round8-9.json`](weights/round8-9.json), also attached to v0.3, and R10_t12's in [`weights/round10.json`](weights/round10.json). Round 10–11 checkpoints are not yet release assets; checksums for R11 and its two wide teachers are in [`logs/11-wide-teachers/vm-manifest.sha256`](logs/11-wide-teachers/vm-manifest.sha256). The 60-epoch architecture screens are not release assets.
 
 [v0.3 release notes](docs/releases/v0.3.md) include the two run summaries, inference commands and checkpoint limitations.
 
@@ -94,7 +98,7 @@ A configurable pre-activation ResNet with optional squeeze-and-excitation (SE) a
 - **ResNet-D downsampling shortcut** (2x2 avg-pool then 1x1 conv, He et al. 2019): pooling aggregates each 2x2 region before projection.
 - 3x3 stem, final BN-ReLU, global average pooling, linear classifier. Kaiming init. Input normalization lives inside the model.
 
-Widths, blocks per stage and block type are configurable (`--widths`, `--blocks`, `--no-se`, `--block bottleneck`); each stage after the first halves the resolution (32 -> 16 -> 8). `train.py` refuses any configuration over 5M trainable parameters, including the optional contrastive projection head.
+Widths, blocks per stage and block type are configurable (`--widths`, `--blocks`, `--no-se`, `--block bottleneck`); each stage after the first halves the resolution (32 -> 16 -> 8). `train.py` refuses any configuration over 5M trainable parameters, including the optional contrastive projection head. `--allow-over-budget` lifts the check for teachers only, as in round 11; such checkpoints are never submission candidates.
 
 | config | block type | widths | blocks | SE | params |
 |--------|------------|--------|--------|----|--------|
@@ -125,17 +129,17 @@ The latest three runs share SGD with momentum 0.9 and Nesterov, batch size 256, 
 | Supervised contrastive loss | Off | Off | Weight 0.1, temperature 0.07 |
 | Seed | 1 | 1 | 1 |
 
-[Training commands for all nine rounds](docs/training.md) include the complete flags and teacher lists. `train.py --help` documents the available options. Training writes checkpoints atomically after every epoch and uses mixed precision on CUDA.
+[Training commands for all eleven rounds](docs/training.md) include the complete flags and teacher lists. `train.py --help` documents the available options. Training writes checkpoints atomically after every epoch and uses mixed precision on CUDA.
 
 Only the 50k CIFAR-10 training images contribute gradient updates. The official 10k test split is monitored after each epoch and has informed experiment choices, so it is not an independent final assessment of the selected recipe. The saved checkpoint is the final epoch, not the epoch with the highest observed score.
 
 ## Experiments
 
-Rounds 1-7 and 9 use **200 epochs** for full runs; round 8 tests **300 epochs**. Round 4 first screens candidates for 60 epochs, then trains the selected architectures from scratch for 200; the screening and confirmation results are reported separately. Rounds 1-4 use seed 0; rounds 5-9 use seed 1. Hardware, worker counts and teacher sets also vary across rounds, so comparisons across rounds do not isolate a single change.
+Rounds 1-7 and 9-11 use **200 epochs** for full student runs; round 8 tests **300 epochs**, and round 11's teachers train for 250. Round 4 first screens candidates for 60 epochs, then trains the selected architectures from scratch for 200; the screening and confirmation results are reported separately. Rounds 1-4 use seed 0; rounds 5-11 use seed 1 for students. Hardware, worker counts and teacher sets also vary across rounds, so comparisons across rounds do not isolate a single change.
 
 Rounds 1-3 ran on one NVIDIA B300, with full per-epoch logs in [`logs/`](logs). Rounds 4-7 used Colab A100 notebooks in [`notebooks/`](notebooks); only round 7's per-epoch logs are currently committed alongside the round 1-3 logs. The notebooks embed the model and training code used for their experiments.
 
-Rounds 8-9 ran on one H200. Their logs include the runtime package versions, recipe manifests, full-precision evaluation and Kaggle submission records. Recreate their unsmoothed training curves with `uv run --no-project --with matplotlib python scripts/plot_training.py`, or the all-model comparison with `uv run --no-project --with matplotlib python scripts/plot_experiments.py`. Matplotlib is only needed for plotting.
+Round 10 ran on a Colab A100 notebook with per-epoch logs in [`logs/10-shift/`](logs/10-shift/). Rounds 8-9 and 11 ran on one H200. Their logs include the runtime package versions, recipe manifests, full-precision evaluation and Kaggle submission records. Recreate their unsmoothed training curves with `uv run --no-project --with matplotlib python scripts/plot_training.py`, or the all-model comparison with `uv run --no-project --with matplotlib python scripts/plot_experiments.py`. Matplotlib is only needed for plotting.
 
 *Final* is test accuracy after the last epoch, *best* is the highest observed epoch, and *TTA* is the final checkpoint averaged with its horizontal flip (`evaluate.py`). CIFAR-10 values are percentages; Kaggle scores are fractions. Training evaluation uses CUDA mixed precision, while `evaluate.py` uses full precision, so small differences between devices or evaluation paths are possible.
 
@@ -315,6 +319,43 @@ Training completed all 200 epochs on one H200. Full-precision evaluation reached
 ![R9 total training objective and CIFAR-10 test accuracy across all 200 epochs](assets/9-combined.png)
 
 The curves show unsmoothed per-epoch mixed-precision evaluation without TTA. R9's total loss includes the contrastive term, so its loss magnitude is not directly comparable with R8's.
+
+### Round 10: twelve teachers and shift augmentation
+
+Two R9-recipe students, seed 1, 200 epochs, distilled from **12 teachers**: R9's ten plus R8_base_300 and R9_combined. `R10_shift` also adds two transforms aimed at the hidden images, which are slightly brighter, higher-contrast and sharper than CIFAR-10: resampling (upscale to 48–64 pixels and back with random filters, `--resample 0.5`) and brightness/contrast jitter 0.2 on half the images (`--jitter 0.2`). Both ran side by side on one Colab A100 in [`notebooks/round10_shift.ipynb`](notebooks/round10_shift.ipynb), at about 124 s per epoch each. Logs, flip-TTA evaluation and submission records are in [`logs/10-shift/`](logs/10-shift/).
+
+[Training commands](docs/training.md#round-10-twelve-teachers-and-shift-augmentation)
+
+| run | change from R9 | final | best | flip TTA | Kaggle public |
+|-----|----------------|-------|------|----------|---------------|
+| R9_combined | none | **97.54** | **97.57** | **97.71** | **0.901** |
+| R10_t12 | 12 teachers | 97.51 | 97.51 | 97.59 | **0.901** |
+| R10_shift | 12 teachers + resampling + jitter | 97.48 | 97.54 | 97.68 | 0.894 |
+| ensemble of the 3 | | | | 97.85 | |
+
+- Neither change beat R9. All three are within 0.12 points with flip TTA, which is within the expected run-to-run noise of a single seed.
+- R10_t12 ties R9 on Kaggle while disagreeing with it on 82 of the 2,000 hidden images, so the two are useful as different final submissions.
+- The shift augmentation kept CIFAR-10 accuracy but scored 0.007 lower on Kaggle, about 1 paired standard deviation; it did not close the gap between the two evaluation sets.
+- R9's flip-TTA value here is from the same Colab evaluation; the round 9 H200 evaluation gives 97.70.
+
+### Round 11: wide teachers
+
+The two largest gains so far came from distillation in rounds 3 and 5, so this round strengthens the teachers. It trains two **36.7M-parameter** teachers, then the exact R9 student with them added to its ten teachers. The teachers use our pre-activation ResNet at WideResNet-28-10 scale (widths 160-320-640, four blocks per stage, no SE), round 2 augmentation and no distillation, 250 epochs, seeds 1 and 2. Only the submitted student is bound by the 5M limit; `--allow-over-budget` admits the teachers and prints a warning that they must not be submitted. Everything ran on one H200: the two teachers side by side in about 47 minutes each, then the student at 26.7 s per epoch for 89 minutes. Logs, the runner, the environment record and the checksum manifest are in [`logs/11-wide-teachers/`](logs/11-wide-teachers/).
+
+[Training commands](docs/training.md#round-11-wide-teachers)
+
+| run | params | final | best | flip TTA | Kaggle public |
+|-----|--------|-------|------|----------|---------------|
+| T_wide_s1 (teacher) | 36,688,170 | 97.63 | 97.68 | 97.86 | not eligible |
+| T_wide_s2 (teacher) | 36,688,170 | **97.65** | **97.76** | 97.85 | not eligible |
+| R9_combined | 4,937,794 | 97.54 | 97.57 | **97.70** | **0.901** |
+| R11_wide | 4,937,794 | 97.33 | 97.40 | 97.56 | 0.894 |
+| ensemble of R9, R11 and both teachers | | | | 98.05 | |
+
+- Both wide teachers are the most accurate single models we trained, but the student did not follow: R11 finished 0.14 points below R9 with flip TTA and 0.007 lower on Kaggle.
+- With rounds 8 and 10, this suggests the R9 student recipe is saturated near 97.6–97.7% flip TTA; neither more epochs, more teachers nor stronger teachers improved it.
+
+**Balanced decoding.** The hidden set has 200 images per class, while R9's predictions range from 174 airplanes to 221 automobiles. [`scripts/balance.py`](scripts/balance.py) keeps the model unchanged and reassigns predictions so that each class receives exactly 200, choosing the assignment with the highest total log-probability (prior correction under label shift, Saerens et al. 2002). On 25 balanced 2,000-image subsets of CIFAR-10 test it changed about 17 predictions and moved accuracy by +0.04 points on average (−0.35 to +0.35). On the hidden set it changed 68 of R9's 2,000 predictions and scored **0.893**, below R9's 0.901, so it was not used further. The record is in [`logs/11-wide-teachers/balanced-decoding.json`](logs/11-wide-teachers/balanced-decoding.json).
 
 ## Kaggle notes
 
