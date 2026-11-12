@@ -89,7 +89,7 @@ uv run python predict.py --checkpoint checkpoints/student.pt
 
 `predict.py` reads `test.csv` (`id,filename`) and the 32x32 PNGs in `test_images/` from `data/kaggle/`, or from `--data-dir`, averages each image with its horizontal flip (`--shift 1` also averages over 1-pixel translations and `--zoom 0.8 1.25` over scale factors; `evaluate.py` takes the same flags), and writes `submission.csv` (`id,label`). Checkpoints store the model config, so any run can be loaded without extra flags. `train.py --resume` continues from the `--out` checkpoint after an interruption; repeat the original architecture and training arguments with `--resume` added. The checkpoint must contain optimizer and scheduler state. CUDA, Apple MPS and CPU are selected automatically in that order; a CUDA GPU is recommended for the full experiments.
 
-The default `train.py` command reproduces the original A architecture and baseline recipe. The best submitted model uses a slightly narrower S2 architecture and ten teachers; see the complete [round 9 command](#round-9-combined-data-focused-recipe). For Colab, use the notebooks linked in each round; for NYU HPC, see [`hpc/README.md`](hpc/README.md).
+The default `train.py` command reproduces the original A architecture and baseline recipe. The best submitted model uses a slightly narrower S2 architecture and ten teachers; see the complete [round 9 command](#round-9-combined-data-focused-recipe). For Colab, use the notebooks linked in each round.
 
 ## Project structure
 
@@ -104,7 +104,6 @@ docs/model-comparison.md  every completed model, with release and log links
 docs/releases/       notes for each weights release
 logs/                per-epoch logs, evaluations and run records, one folder per round
 notebooks/           Colab notebooks for rounds 4-7 and 10 (with embedded training code) and Kaggle prediction
-hpc/                 Slurm jobs and setup for NYU HPC cloud bursting
 scripts/             plotting and balanced decoding
 assets/              figures and their source data
 tests/               unit tests (uv run python -m unittest tests.test_training)
