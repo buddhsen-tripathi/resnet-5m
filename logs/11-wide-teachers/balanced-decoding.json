@@ -35,8 +35,7 @@
     "date": "2026-11-06 22:29:11.200000",
     "description": "R9_combined (4,937,794 params, 200 ep, 10 teachers), flip TTA, balanced decoding: optimal assignment to 200 predictions per class; no labels, no test-time training, no weight updates. CIFAR-10 97.54% raw / 97.70% flip.",
     "status": "SubmissionStatus.COMPLETE",
-    "publicScore": "0.89300",
-    "privateScore": "0.87300"
+    "publicScore": "0.89300"
   },
   "submission_record_retrieved": "2026-11-12",
   "conclusion": "Public score fell from 0.901 to 0.893, so balanced decoding was dropped from the round 11 finish stage."

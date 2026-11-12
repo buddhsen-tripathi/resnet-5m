@@ -35,8 +35,7 @@
     "date": "2026-11-05 23:01:39.260000",
     "description": "R10_shift: R9 recipe (S2 128-192-228/4-3-2, AugMix, 8px Cutout, KD 0.7/T4, SupCon 0.1) + 12 teachers (R9's ten + R8_base_300 + R9_combined) + resampling (p0.5, 48-64px) and brightness/contrast jitter 0.2 (p0.5); 200 ep, seed 1; 4,937,794 params. Flip TTA; CIFAR-10 97.48% raw, 97.68% flip.",
     "status": "SubmissionStatus.COMPLETE",
-    "publicScore": "0.89400",
-    "privateScore": "0.87000"
+    "publicScore": "0.89400"
   },
   "submission_record_retrieved": "2026-11-12"
 }
