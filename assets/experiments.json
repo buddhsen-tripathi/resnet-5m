@@ -1,14 +1,15 @@
 {
   "notes": [
-    "28 completed single-model training runs; 60-epoch architecture screens and teacher ensembles excluded.",
+    "31 completed single-model training runs; 60-epoch architecture screens, teacher ensembles and the two over-budget round 11 teachers excluded.",
     "Values reproduce the round tables in README.md; each run uses its recorded evaluation protocol.",
     "No-TTA values generally come from mixed-precision training evaluation; R8 and R9 use final full-precision evaluation.",
     "R6 is 97.25% in its original training log and 97.26% in the later H200 full-precision re-evaluation.",
-    "Kaggle scores refer to the recorded standard flip-TTA submission; alternative zoom/shift submissions are excluded.",
+    "Kaggle scores refer to the recorded standard flip-TTA submission; alternative zoom/shift, BatchNorm-adaptation and balanced-decoding submissions are excluded.",
     "Missing Kaggle scores mean no recorded submission for that checkpoint and protocol.",
     "Seeds, hardware, augmentation and teachers vary across rounds; these are individual runs, not controlled comparisons or multi-seed estimates.",
     "The public leaderboard scores 1,000 images (50%); the other 1,000 form the private split.",
-    "Parameter counts refer to the inference classifier. R9 also trains a 45,824-parameter projection head; its total remains below 5M."
+    "Parameter counts refer to the inference classifier. R9, R10 and R11 also train a 45,824-parameter projection head; their totals remain below 5M.",
+    "Round 10 and 11 checkpoints are not release assets; R10_t12's inference export is in weights/."
   ],
   "runs": [
     {
@@ -402,6 +403,49 @@
       "kaggle_public": 0.901,
       "release": "v0.3",
       "source": "logs/9-combined/R9_combined.log"
+    },
+    {
+      "round": 10,
+      "run": "R10_t12",
+      "label": "R10, 12 teachers",
+      "parameters": 4937794,
+      "total_training_parameters": 4983618,
+      "epochs": 200,
+      "seed": 1,
+      "cifar10_final_percent": 97.51,
+      "cifar10_flip_percent": 97.59,
+      "kaggle_public": 0.901,
+      "release": null,
+      "weights": "weights/R10_t12.pt",
+      "source": "logs/10-shift/R10_t12.log"
+    },
+    {
+      "round": 10,
+      "run": "R10_shift",
+      "label": "R10, 12 teachers + shift aug",
+      "parameters": 4937794,
+      "total_training_parameters": 4983618,
+      "epochs": 200,
+      "seed": 1,
+      "cifar10_final_percent": 97.48,
+      "cifar10_flip_percent": 97.68,
+      "kaggle_public": 0.894,
+      "release": null,
+      "source": "logs/10-shift/R10_shift.log"
+    },
+    {
+      "round": 11,
+      "run": "R11_wide",
+      "label": "R11, + two wide teachers",
+      "parameters": 4937794,
+      "total_training_parameters": 4983618,
+      "epochs": 200,
+      "seed": 1,
+      "cifar10_final_percent": 97.33,
+      "cifar10_flip_percent": 97.56,
+      "kaggle_public": 0.894,
+      "release": null,
+      "source": "logs/11-wide-teachers/R11_wide.log"
     }
   ]
 }
