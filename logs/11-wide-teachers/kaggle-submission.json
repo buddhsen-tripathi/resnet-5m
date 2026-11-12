@@ -5,7 +5,6 @@
   "description": "R11_wide: R9 recipe (S2 128-192-228/4-3-2, AugMix, 8px Cutout, KD 0.7/T4, SupCon 0.1), 12 teachers (R9's ten + two 36.7M wide ResNets trained from scratch on CIFAR-10, 250 ep); 200 ep, seed 1; 4,937,794 params. Flip TTA; CIFAR-10 97.33% raw, 97.56% flip.",
   "status": "SubmissionStatus.COMPLETE",
   "publicScore": "0.89400",
-  "privateScore": "0.87000",
   "run": "R11_wide",
   "rows": 2000,
   "submission_sha256": "c6120221e4622da565420abe40db501b64caea8f9650a9f9341e455f7a35e226",

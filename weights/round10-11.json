@@ -1,9 +1,10 @@
 {
-  "description": "Exact inference export used for the R10_t12 Kaggle submission; the full resumable checkpoint, R10_shift and R11_wide are not in the repository. cifar10_raw is the final mixed-precision training evaluation; cifar10_flip is the full-precision evaluate.py result.",
+  "description": "Inference exports from rounds 10 and 11, attached to release v0.4; R10_t12 is also in weights/. R10_t12 and R10_shift are the exact files used for their Kaggle submissions; R11_wide has the same weights as its submitted training checkpoint. cifar10_raw is the final mixed-precision training evaluation; cifar10_flip is the full-precision evaluate.py result.",
   "models": [
     {
       "run": "R10_t12",
       "round": 10,
+      "role": "student",
       "epoch": 200,
       "file": "weights/R10_t12.pt",
       "sha256": "1dc129c8d11e148b46d7fbf8f2b4df9ae1e03b231fe0f8e92a55361840de2471",
@@ -24,12 +25,138 @@
         "drop_path": 0.0
       },
       "inference_parameters": 4937794,
+      "total_training_parameters": 4983618,
       "cifar10_raw": 0.9751,
       "cifar10_flip": 0.9759,
       "kaggle_public": 0.901,
       "tta": "horizontal flip only",
+      "resumable": false
+    },
+    {
+      "run": "R10_shift",
+      "round": 10,
+      "role": "student",
+      "epoch": 200,
+      "file": "R10_shift.pt",
+      "sha256": "3945a1a9a715b8c0fbaeeaa6919d896c945b489d992643bbe6d1b58d7d4570aa",
+      "source_checkpoint_sha256": "f35c444af16306c75eeffc902f903e6180d9733750601048f8d6852398c05f8d",
+      "cfg": {
+        "widths": [
+          128,
+          192,
+          228
+        ],
+        "blocks": [
+          4,
+          3,
+          2
+        ],
+        "se": false,
+        "block": "basic",
+        "drop_path": 0.0
+      },
+      "inference_parameters": 4937794,
+      "total_training_parameters": 4983618,
+      "cifar10_raw": 0.9748,
+      "cifar10_flip": 0.9768,
+      "kaggle_public": 0.894,
+      "tta": "horizontal flip only",
+      "resumable": false
+    },
+    {
+      "run": "R11_wide",
+      "round": 11,
+      "role": "student",
+      "epoch": 200,
+      "file": "R11_wide.pt",
+      "sha256": "3763ac906b2b350493e825e47bfd8eca8b1e484c0b77e74dd55ef4b63a6ea678",
+      "source_checkpoint_sha256": "70fc3b54c67495eb7ef96900e79ccd1dbd56574bf3d23f9ea3d22a37821ae9a1",
+      "cfg": {
+        "widths": [
+          128,
+          192,
+          228
+        ],
+        "blocks": [
+          4,
+          3,
+          2
+        ],
+        "se": false,
+        "block": "basic",
+        "drop_path": 0.0
+      },
+      "inference_parameters": 4937794,
+      "total_training_parameters": 4983618,
+      "cifar10_raw": 0.9733,
+      "cifar10_flip": 0.9756,
+      "kaggle_public": 0.894,
+      "tta": "horizontal flip only",
+      "resumable": false
+    },
+    {
+      "run": "T_wide_s1",
+      "round": 11,
+      "role": "teacher",
+      "epoch": 250,
+      "file": "T_wide_s1.pt",
+      "sha256": "bf9db158ee13157ee6c83f338f6f9ab683728603f75998e9b9195a0da53f1fea",
+      "source_checkpoint_sha256": "f92ce2801fb3fc391f70f4732d254bdf85fbd9226a5a1e44f355087824fb30ab",
+      "cfg": {
+        "widths": [
+          160,
+          320,
+          640
+        ],
+        "blocks": [
+          4,
+          4,
+          4
+        ],
+        "se": false,
+        "block": "basic",
+        "drop_path": 0.0
+      },
+      "inference_parameters": 36688170,
+      "total_training_parameters": 36688170,
+      "cifar10_raw": 0.9763,
+      "cifar10_flip": 0.9786,
+      "kaggle_public": null,
+      "tta": "horizontal flip only",
       "resumable": false,
-      "total_training_parameters": 4983618
+      "note": "Over the 5M limit (--allow-over-budget); a distillation teacher only, never a submission."
+    },
+    {
+      "run": "T_wide_s2",
+      "round": 11,
+      "role": "teacher",
+      "epoch": 250,
+      "file": "T_wide_s2.pt",
+      "sha256": "2db41dbff920968f1f0c7b5b2d81438238bc9b400f06ae2cdaf22afd4bff551d",
+      "source_checkpoint_sha256": "8293ed7ea5ec93d3c2847ec1ae781b67cb0fe7f79306f83a96b3b5b9679714be",
+      "cfg": {
+        "widths": [
+          160,
+          320,
+          640
+        ],
+        "blocks": [
+          4,
+          4,
+          4
+        ],
+        "se": false,
+        "block": "basic",
+        "drop_path": 0.0
+      },
+      "inference_parameters": 36688170,
+      "total_training_parameters": 36688170,
+      "cifar10_raw": 0.9765,
+      "cifar10_flip": 0.9785,
+      "kaggle_public": null,
+      "tta": "horizontal flip only",
+      "resumable": false,
+      "note": "Over the 5M limit (--allow-over-budget); a distillation teacher only, never a submission."
     }
   ]
 }
