@@ -74,6 +74,32 @@ class TrainingTests(unittest.TestCase):
             self.assertTrue(((view >= 0) & (view <= 1)).all())
             torch.testing.assert_close((view[:, 0] == 0.5).sum((1, 2)), torch.full((4,), 64))
 
+    def test_resample_keeps_size_and_changes_pixels(self):
+        image = Image.fromarray(torch.randint(0, 256, (32, 32, 3), dtype=torch.uint8).numpy())
+        self.assertIs(train.RandomResample(0.0)(image), image)
+        torch.manual_seed(0)
+        outputs = [train.RandomResample(1.0, (48, 64))(image) for _ in range(8)]
+        for output in outputs:
+            self.assertEqual(output.size, (32, 32))
+            self.assertEqual(output.mode, 'RGB')
+        self.assertTrue(any(list(output.getdata()) != list(image.getdata()) for output in outputs))
+
+    def test_shift_augmentation_flags_build_valid_views(self):
+        with patch.object(sys, 'argv', ['train.py', '--augmix', '--supcon', '0.1', '--cutout', '--cutout-size', '8',
+                                      '--resample', '1', '--jitter', '0.2', '--jitter-p', '1',
+                                      '--workers', '0', '--batch-size', '4']):
+            args = train.get_args()
+        with patch.object(train.datasets, 'CIFAR10', TinyCifar):
+            loader, _ = train.loaders(args)
+        views, _ = next(iter(loader))
+        for view in views:
+            self.assertEqual(view.shape, (4, 3, 32, 32))
+            self.assertTrue(((view >= 0) & (view <= 1)).all())
+        for bad in (['--resample', '1.5'], ['--resample-size', '64', '48'], ['--jitter', '-0.1']):
+            with patch.object(sys, 'argv', ['train.py', *bad]), contextlib.redirect_stderr(io.StringIO()), \
+                    self.assertRaises(SystemExit):
+                train.get_args()
+
     def test_projection_fits_budget_and_inference_loads_without_it(self):
         model = ResNet(widths=[128, 192, 228], blocks=[4, 3, 2], se=False).eval()
         head = torch.nn.Sequential(torch.nn.Linear(228, 128), torch.nn.ReLU(), torch.nn.Linear(128, 128))
@@ -86,6 +112,21 @@ class TrainingTests(unittest.TestCase):
             torch.testing.assert_close(logits, model.fc(features), rtol=0, atol=0)
         clone = ResNet(widths=[128, 192, 228], blocks=[4, 3, 2], se=False)
         clone.load_state_dict(model.state_dict(), strict=True)
+
+    def test_budget_check_blocks_students_and_admits_flagged_teachers(self):
+        wide = count_params(ResNet(widths=[160, 320, 640], blocks=[4, 4, 4], se=False))
+        self.assertEqual(wide, 36_688_170)
+        train.check_budget(MAX_PARAMS)
+        train.check_budget(4_983_618, allow_over_budget=True)
+        with self.assertRaisesRegex(AssertionError, "allow-over-budget"):
+            train.check_budget(wide)
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            train.check_budget(wide, allow_over_budget=True)
+        self.assertIn("must not be submitted", out.getvalue())
+        with patch.object(sys, "argv", ["train.py", "--allow-over-budget"]):
+            self.assertTrue(train.get_args().allow_over_budget)
+        with patch.object(sys, "argv", ["train.py"]):
+            self.assertFalse(train.get_args().allow_over_budget)
 
     def test_combined_training_resumes_with_projection_optimizer_and_rng(self):
         generator = torch.Generator().manual_seed(9)
