@@ -1,0 +1,42 @@
+{
+  "run": "R10_t12",
+  "epoch": 200,
+  "parameters": 4937794,
+  "total_training_parameters": 4983618,
+  "tta": "horizontal flip only",
+  "full_checkpoint_sha256": "41b6b2899647150418d9e33b63bf570879c6dd9473e1a26d0cf1dbad98b15013",
+  "checkpoint_sha256": "1dc129c8d11e148b46d7fbf8f2b4df9ae1e03b231fe0f8e92a55361840de2471",
+  "model_py_sha256": "90d4aa43797a23546d7b85f5fe823bfeeea285b1c2562d11b4aa21ed56cab36c",
+  "predict_py_sha256": "dfde2efebc16478cdb68b313c41f32ba97785e7413c8ad97a4544b84ed5e756a",
+  "rows": 2000,
+  "class_counts": {
+    "6": 184,
+    "3": 208,
+    "9": 195,
+    "2": 201,
+    "8": 202,
+    "4": 193,
+    "1": 219,
+    "5": 212,
+    "7": 203,
+    "0": 183
+  },
+  "submission_sha256": "d14c68b84e65211b62b62659785ddde163bb0fd53b664f82f64dc02fc67f8e99",
+  "kernel": "btr1pathi/cnn-maxxxing-predict",
+  "kernel_version": 7,
+  "submission_ref": "58037571",
+  "public_score": 0.901,
+  "differs_from_R9_submission": "82/2000",
+  "differs_from_R10_shift_submission": "78/2000",
+  "competition": "cifar-10-res-net-architecture-challenge-dl",
+  "submission": {
+    "ref": "58037571",
+    "fileName": "submission_R10_t12.csv",
+    "date": "2026-11-05 23:17:53.230000",
+    "description": "R10_t12 (control): R9 recipe (S2 128-192-228/4-3-2, AugMix, 8px Cutout, KD 0.7/T4, SupCon 0.1) + 12 teachers (R9's ten + R8_base_300 + R9_combined); no shift augmentation; 200 ep, seed 1; 4,937,794 params. Flip TTA; CIFAR-10 97.51% raw, 97.59% flip.",
+    "status": "SubmissionStatus.COMPLETE",
+    "publicScore": "0.90100",
+    "privateScore": "0.86200"
+  },
+  "submission_record_retrieved": "2026-11-12"
+}

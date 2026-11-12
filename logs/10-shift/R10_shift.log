@@ -1,0 +1,409 @@
+params: 4,983,618
+classifier: 4,937,794; training-only projection head: 45,824
+epoch 1/200  loss 1.8024  test_acc 0.4281  lr 0.0400  135.6s
+  classification_kd 1.1973  supcon 6.0512
+epoch 2/200  loss 1.4989  test_acc 0.6135  lr 0.0800  124.2s
+  classification_kd 0.9278  supcon 5.7110
+params: 4,983,618
+classifier: 4,937,794; training-only projection head: 45,824
+resumed from /content/round10-shift/R10_shift.pt at epoch 2
+params: 4,983,618
+classifier: 4,937,794; training-only projection head: 45,824
+resumed from /content/round10-shift/R10_shift.pt at epoch 2
+epoch 3/200  loss 1.3153  test_acc 0.6618  lr 0.1200  136.4s
+  classification_kd 0.7710  supcon 5.4425
+epoch 4/200  loss 1.2025  test_acc 0.7154  lr 0.1600  124.2s
+  classification_kd 0.6769  supcon 5.2559
+epoch 5/200  loss 1.1121  test_acc 0.7171  lr 0.2000  123.7s
+  classification_kd 0.5988  supcon 5.1329
+epoch 6/200  loss 1.0731  test_acc 0.7155  lr 0.2000  124.4s
+  classification_kd 0.5706  supcon 5.0249
+epoch 7/200  loss 1.0403  test_acc 0.8056  lr 0.1999  124.2s
+  classification_kd 0.5466  supcon 4.9369
+epoch 8/200  loss 0.9962  test_acc 0.8306  lr 0.1999  124.1s
+  classification_kd 0.5070  supcon 4.8918
+epoch 9/200  loss 0.9747  test_acc 0.7193  lr 0.1998  124.0s
+  classification_kd 0.4913  supcon 4.8344
+epoch 10/200  loss 0.9629  test_acc 0.7848  lr 0.1997  124.4s
+  classification_kd 0.4828  supcon 4.8006
+epoch 11/200  loss 0.9267  test_acc 0.8221  lr 0.1995  124.4s
+  classification_kd 0.4492  supcon 4.7743
+epoch 12/200  loss 0.9381  test_acc 0.8590  lr 0.1994  124.0s
+  classification_kd 0.4635  supcon 4.7457
+epoch 13/200  loss 0.8998  test_acc 0.8717  lr 0.1992  124.1s
+  classification_kd 0.4277  supcon 4.7207
+epoch 14/200  loss 0.9046  test_acc 0.8497  lr 0.1990  124.3s
+  classification_kd 0.4342  supcon 4.7044
+epoch 15/200  loss 0.9027  test_acc 0.8891  lr 0.1987  124.5s
+  classification_kd 0.4344  supcon 4.6829
+epoch 16/200  loss 0.8773  test_acc 0.8732  lr 0.1984  124.4s
+  classification_kd 0.4102  supcon 4.6711
+epoch 17/200  loss 0.8955  test_acc 0.8659  lr 0.1981  124.0s
+  classification_kd 0.4317  supcon 4.6379
+epoch 18/200  loss 0.8606  test_acc 0.8801  lr 0.1978  124.1s
+  classification_kd 0.3971  supcon 4.6352
+epoch 19/200  loss 0.8733  test_acc 0.8734  lr 0.1975  124.2s
+  classification_kd 0.4107  supcon 4.6256
+epoch 20/200  loss 0.8600  test_acc 0.8385  lr 0.1971  124.1s
+  classification_kd 0.3988  supcon 4.6117
+epoch 21/200  loss 0.8704  test_acc 0.8946  lr 0.1967  124.1s
+  classification_kd 0.4096  supcon 4.6082
+epoch 22/200  loss 0.8578  test_acc 0.8826  lr 0.1963  124.5s
+  classification_kd 0.3981  supcon 4.5972
+epoch 23/200  loss 0.8549  test_acc 0.8570  lr 0.1958  124.3s
+  classification_kd 0.3958  supcon 4.5912
+epoch 24/200  loss 0.8570  test_acc 0.8700  lr 0.1954  124.2s
+  classification_kd 0.3996  supcon 4.5742
+epoch 25/200  loss 0.8356  test_acc 0.8689  lr 0.1949  124.1s
+  classification_kd 0.3787  supcon 4.5692
+epoch 26/200  loss 0.8153  test_acc 0.8681  lr 0.1943  124.2s
+  classification_kd 0.3572  supcon 4.5813
+epoch 27/200  loss 0.8446  test_acc 0.8673  lr 0.1938  123.8s
+  classification_kd 0.3893  supcon 4.5529
+epoch 28/200  loss 0.8314  test_acc 0.8893  lr 0.1932  124.3s
+  classification_kd 0.3761  supcon 4.5531
+epoch 29/200  loss 0.8201  test_acc 0.8981  lr 0.1926  124.5s
+  classification_kd 0.3656  supcon 4.5453
+epoch 30/200  loss 0.8353  test_acc 0.8944  lr 0.1920  124.1s
+  classification_kd 0.3811  supcon 4.5419
+epoch 31/200  loss 0.8143  test_acc 0.9059  lr 0.1914  123.8s
+  classification_kd 0.3610  supcon 4.5327
+epoch 32/200  loss 0.8156  test_acc 0.9036  lr 0.1907  123.9s
+  classification_kd 0.3626  supcon 4.5303
+epoch 33/200  loss 0.8193  test_acc 0.9091  lr 0.1900  124.3s
+  classification_kd 0.3662  supcon 4.5303
+epoch 34/200  loss 0.8019  test_acc 0.8913  lr 0.1893  124.3s
+  classification_kd 0.3495  supcon 4.5243
+epoch 35/200  loss 0.8300  test_acc 0.9117  lr 0.1885  124.9s
+  classification_kd 0.3786  supcon 4.5145
+epoch 36/200  loss 0.8198  test_acc 0.9154  lr 0.1878  124.1s
+  classification_kd 0.3699  supcon 4.4989
+epoch 37/200  loss 0.8110  test_acc 0.8899  lr 0.1870  123.9s
+  classification_kd 0.3617  supcon 4.4929
+epoch 38/200  loss 0.7957  test_acc 0.8761  lr 0.1862  124.1s
+  classification_kd 0.3450  supcon 4.5074
+epoch 39/200  loss 0.8043  test_acc 0.9046  lr 0.1854  124.3s
+  classification_kd 0.3535  supcon 4.5083
+epoch 40/200  loss 0.8070  test_acc 0.8943  lr 0.1845  123.3s
+  classification_kd 0.3585  supcon 4.4849
+epoch 41/200  loss 0.7878  test_acc 0.8992  lr 0.1836  124.3s
+  classification_kd 0.3387  supcon 4.4912
+epoch 42/200  loss 0.7984  test_acc 0.8813  lr 0.1828  124.2s
+  classification_kd 0.3504  supcon 4.4795
+epoch 43/200  loss 0.7991  test_acc 0.9241  lr 0.1818  124.0s
+  classification_kd 0.3498  supcon 4.4926
+epoch 44/200  loss 0.7998  test_acc 0.9134  lr 0.1809  124.1s
+  classification_kd 0.3521  supcon 4.4770
+epoch 45/200  loss 0.8024  test_acc 0.8916  lr 0.1799  124.1s
+  classification_kd 0.3564  supcon 4.4608
+epoch 46/200  loss 0.7906  test_acc 0.9116  lr 0.1790  124.6s
+  classification_kd 0.3436  supcon 4.4702
+epoch 47/200  loss 0.7846  test_acc 0.9130  lr 0.1780  124.6s
+  classification_kd 0.3376  supcon 4.4701
+epoch 48/200  loss 0.7808  test_acc 0.9113  lr 0.1769  124.5s
+  classification_kd 0.3338  supcon 4.4700
+epoch 49/200  loss 0.7845  test_acc 0.8920  lr 0.1759  123.9s
+  classification_kd 0.3375  supcon 4.4700
+epoch 50/200  loss 0.7874  test_acc 0.9153  lr 0.1749  124.2s
+  classification_kd 0.3425  supcon 4.4488
+epoch 51/200  loss 0.7943  test_acc 0.9066  lr 0.1738  124.2s
+  classification_kd 0.3491  supcon 4.4521
+epoch 52/200  loss 0.7883  test_acc 0.9208  lr 0.1727  125.0s
+  classification_kd 0.3446  supcon 4.4374
+epoch 53/200  loss 0.7993  test_acc 0.9142  lr 0.1716  124.7s
+  classification_kd 0.3568  supcon 4.4253
+epoch 54/200  loss 0.7954  test_acc 0.9235  lr 0.1704  124.2s
+  classification_kd 0.3504  supcon 4.4492
+epoch 55/200  loss 0.7871  test_acc 0.9098  lr 0.1693  124.3s
+  classification_kd 0.3435  supcon 4.4364
+epoch 56/200  loss 0.7638  test_acc 0.9144  lr 0.1681  124.3s
+  classification_kd 0.3193  supcon 4.4450
+epoch 57/200  loss 0.7892  test_acc 0.9163  lr 0.1669  123.5s
+  classification_kd 0.3453  supcon 4.4392
+epoch 58/200  loss 0.7818  test_acc 0.9182  lr 0.1657  124.0s
+  classification_kd 0.3400  supcon 4.4182
+epoch 59/200  loss 0.7840  test_acc 0.9057  lr 0.1645  124.2s
+  classification_kd 0.3425  supcon 4.4144
+epoch 60/200  loss 0.7805  test_acc 0.9034  lr 0.1632  124.2s
+  classification_kd 0.3379  supcon 4.4260
+epoch 61/200  loss 0.7717  test_acc 0.9076  lr 0.1620  124.2s
+  classification_kd 0.3299  supcon 4.4181
+epoch 62/200  loss 0.7758  test_acc 0.9221  lr 0.1607  124.2s
+  classification_kd 0.3341  supcon 4.4169
+epoch 63/200  loss 0.7947  test_acc 0.9352  lr 0.1594  124.1s
+  classification_kd 0.3552  supcon 4.3959
+epoch 64/200  loss 0.7527  test_acc 0.9283  lr 0.1581  124.1s
+  classification_kd 0.3115  supcon 4.4121
+epoch 65/200  loss 0.7677  test_acc 0.9102  lr 0.1568  124.6s
+  classification_kd 0.3269  supcon 4.4081
+epoch 66/200  loss 0.7674  test_acc 0.9249  lr 0.1555  124.2s
+  classification_kd 0.3280  supcon 4.3940
+epoch 67/200  loss 0.7689  test_acc 0.9080  lr 0.1541  124.2s
+  classification_kd 0.3306  supcon 4.3833
+epoch 68/200  loss 0.7711  test_acc 0.8995  lr 0.1528  124.2s
+  classification_kd 0.3318  supcon 4.3934
+epoch 69/200  loss 0.7655  test_acc 0.9299  lr 0.1514  124.4s
+  classification_kd 0.3267  supcon 4.3884
+epoch 70/200  loss 0.7651  test_acc 0.9083  lr 0.1500  124.3s
+  classification_kd 0.3270  supcon 4.3810
+epoch 71/200  loss 0.7465  test_acc 0.9279  lr 0.1486  123.8s
+  classification_kd 0.3070  supcon 4.3946
+epoch 72/200  loss 0.7438  test_acc 0.9227  lr 0.1472  124.0s
+  classification_kd 0.3044  supcon 4.3940
+epoch 73/200  loss 0.7541  test_acc 0.9251  lr 0.1458  123.8s
+  classification_kd 0.3160  supcon 4.3813
+epoch 74/200  loss 0.7540  test_acc 0.9217  lr 0.1443  124.5s
+  classification_kd 0.3166  supcon 4.3741
+epoch 75/200  loss 0.7393  test_acc 0.9325  lr 0.1429  123.8s
+  classification_kd 0.3016  supcon 4.3769
+epoch 76/200  loss 0.7494  test_acc 0.9279  lr 0.1414  124.1s
+  classification_kd 0.3130  supcon 4.3646
+epoch 77/200  loss 0.7445  test_acc 0.9137  lr 0.1399  123.9s
+  classification_kd 0.3082  supcon 4.3635
+epoch 78/200  loss 0.7414  test_acc 0.9243  lr 0.1385  123.9s
+  classification_kd 0.3050  supcon 4.3644
+epoch 79/200  loss 0.7233  test_acc 0.9255  lr 0.1370  123.6s
+  classification_kd 0.2868  supcon 4.3659
+epoch 80/200  loss 0.7555  test_acc 0.9352  lr 0.1355  123.8s
+  classification_kd 0.3209  supcon 4.3456
+epoch 81/200  loss 0.7487  test_acc 0.9211  lr 0.1339  123.3s
+  classification_kd 0.3141  supcon 4.3459
+epoch 82/200  loss 0.7312  test_acc 0.9137  lr 0.1324  124.2s
+  classification_kd 0.2967  supcon 4.3451
+epoch 83/200  loss 0.7446  test_acc 0.9277  lr 0.1309  124.6s
+  classification_kd 0.3113  supcon 4.3334
+epoch 84/200  loss 0.7301  test_acc 0.9395  lr 0.1294  124.1s
+  classification_kd 0.2956  supcon 4.3449
+epoch 85/200  loss 0.7358  test_acc 0.9263  lr 0.1278  124.2s
+  classification_kd 0.3017  supcon 4.3407
+epoch 86/200  loss 0.7368  test_acc 0.9195  lr 0.1263  124.0s
+  classification_kd 0.3038  supcon 4.3304
+epoch 87/200  loss 0.7349  test_acc 0.9261  lr 0.1247  124.4s
+  classification_kd 0.3012  supcon 4.3364
+epoch 88/200  loss 0.7140  test_acc 0.9328  lr 0.1231  124.8s
+  classification_kd 0.2810  supcon 4.3298
+epoch 89/200  loss 0.7397  test_acc 0.9371  lr 0.1216  123.5s
+  classification_kd 0.3064  supcon 4.3329
+epoch 90/200  loss 0.7365  test_acc 0.9346  lr 0.1200  124.9s
+  classification_kd 0.3050  supcon 4.3157
+epoch 91/200  loss 0.7170  test_acc 0.9338  lr 0.1184  123.1s
+  classification_kd 0.2864  supcon 4.3060
+epoch 92/200  loss 0.7361  test_acc 0.9362  lr 0.1168  124.6s
+  classification_kd 0.3049  supcon 4.3117
+epoch 93/200  loss 0.7205  test_acc 0.9357  lr 0.1152  123.9s
+  classification_kd 0.2893  supcon 4.3120
+epoch 94/200  loss 0.7258  test_acc 0.9314  lr 0.1137  124.0s
+  classification_kd 0.2954  supcon 4.3034
+epoch 95/200  loss 0.7132  test_acc 0.9330  lr 0.1121  124.4s
+  classification_kd 0.2828  supcon 4.3039
+epoch 96/200  loss 0.7275  test_acc 0.9262  lr 0.1105  123.3s
+  classification_kd 0.2984  supcon 4.2911
+epoch 97/200  loss 0.7216  test_acc 0.9422  lr 0.1088  123.5s
+  classification_kd 0.2927  supcon 4.2885
+epoch 98/200  loss 0.7174  test_acc 0.9259  lr 0.1072  124.2s
+  classification_kd 0.2886  supcon 4.2882
+epoch 99/200  loss 0.7057  test_acc 0.9401  lr 0.1056  123.8s
+  classification_kd 0.2771  supcon 4.2862
+epoch 100/200  loss 0.7066  test_acc 0.9316  lr 0.1040  124.1s
+  classification_kd 0.2779  supcon 4.2870
+epoch 101/200  loss 0.7129  test_acc 0.9450  lr 0.1024  123.7s
+  classification_kd 0.2853  supcon 4.2757
+epoch 102/200  loss 0.7279  test_acc 0.9306  lr 0.1008  124.3s
+  classification_kd 0.3015  supcon 4.2641
+epoch 103/200  loss 0.7152  test_acc 0.9366  lr 0.0992  123.3s
+  classification_kd 0.2890  supcon 4.2620
+epoch 104/200  loss 0.7204  test_acc 0.9440  lr 0.0976  123.9s
+  classification_kd 0.2951  supcon 4.2524
+epoch 105/200  loss 0.7167  test_acc 0.9379  lr 0.0960  123.9s
+  classification_kd 0.2913  supcon 4.2541
+epoch 106/200  loss 0.6915  test_acc 0.9249  lr 0.0944  124.3s
+  classification_kd 0.2653  supcon 4.2623
+epoch 107/200  loss 0.7214  test_acc 0.9383  lr 0.0928  124.5s
+  classification_kd 0.2961  supcon 4.2531
+epoch 108/200  loss 0.7110  test_acc 0.9298  lr 0.0912  123.9s
+  classification_kd 0.2866  supcon 4.2442
+epoch 109/200  loss 0.7150  test_acc 0.9298  lr 0.0895  124.0s
+  classification_kd 0.2912  supcon 4.2378
+epoch 110/200  loss 0.7052  test_acc 0.9412  lr 0.0879  124.0s
+  classification_kd 0.2815  supcon 4.2366
+epoch 111/200  loss 0.7067  test_acc 0.9464  lr 0.0863  124.1s
+  classification_kd 0.2832  supcon 4.2359
+epoch 112/200  loss 0.7132  test_acc 0.9440  lr 0.0848  123.9s
+  classification_kd 0.2907  supcon 4.2248
+epoch 113/200  loss 0.6821  test_acc 0.9486  lr 0.0832  124.2s
+  classification_kd 0.2595  supcon 4.2261
+epoch 114/200  loss 0.6745  test_acc 0.9442  lr 0.0816  123.4s
+  classification_kd 0.2508  supcon 4.2372
+epoch 115/200  loss 0.6951  test_acc 0.9484  lr 0.0800  124.2s
+  classification_kd 0.2734  supcon 4.2170
+epoch 116/200  loss 0.6993  test_acc 0.9438  lr 0.0784  124.1s
+  classification_kd 0.2785  supcon 4.2089
+epoch 117/200  loss 0.7011  test_acc 0.9460  lr 0.0769  123.3s
+  classification_kd 0.2804  supcon 4.2067
+epoch 118/200  loss 0.6920  test_acc 0.9483  lr 0.0753  124.2s
+  classification_kd 0.2716  supcon 4.2040
+epoch 119/200  loss 0.6832  test_acc 0.9496  lr 0.0737  124.0s
+  classification_kd 0.2621  supcon 4.2114
+epoch 120/200  loss 0.6653  test_acc 0.9427  lr 0.0722  124.1s
+  classification_kd 0.2452  supcon 4.2004
+epoch 121/200  loss 0.6870  test_acc 0.9506  lr 0.0706  124.1s
+  classification_kd 0.2670  supcon 4.1998
+epoch 122/200  loss 0.6701  test_acc 0.9433  lr 0.0691  123.9s
+  classification_kd 0.2502  supcon 4.1987
+epoch 123/200  loss 0.6748  test_acc 0.9489  lr 0.0676  123.3s
+  classification_kd 0.2571  supcon 4.1771
+epoch 124/200  loss 0.6555  test_acc 0.9475  lr 0.0661  124.4s
+  classification_kd 0.2372  supcon 4.1830
+epoch 125/200  loss 0.6773  test_acc 0.9504  lr 0.0645  124.1s
+  classification_kd 0.2594  supcon 4.1782
+epoch 126/200  loss 0.6721  test_acc 0.9443  lr 0.0630  124.2s
+  classification_kd 0.2545  supcon 4.1759
+epoch 127/200  loss 0.6693  test_acc 0.9506  lr 0.0615  124.0s
+  classification_kd 0.2522  supcon 4.1716
+epoch 128/200  loss 0.6392  test_acc 0.9511  lr 0.0601  123.4s
+  classification_kd 0.2216  supcon 4.1751
+epoch 129/200  loss 0.6826  test_acc 0.9521  lr 0.0586  124.5s
+  classification_kd 0.2664  supcon 4.1616
+epoch 130/200  loss 0.6453  test_acc 0.9523  lr 0.0571  123.5s
+  classification_kd 0.2298  supcon 4.1546
+epoch 131/200  loss 0.6716  test_acc 0.9485  lr 0.0557  123.6s
+  classification_kd 0.2567  supcon 4.1484
+epoch 132/200  loss 0.6804  test_acc 0.9557  lr 0.0542  124.2s
+  classification_kd 0.2668  supcon 4.1363
+epoch 133/200  loss 0.6491  test_acc 0.9537  lr 0.0528  124.3s
+  classification_kd 0.2355  supcon 4.1352
+epoch 134/200  loss 0.6731  test_acc 0.9569  lr 0.0514  123.9s
+  classification_kd 0.2596  supcon 4.1355
+epoch 135/200  loss 0.6481  test_acc 0.9567  lr 0.0500  124.5s
+  classification_kd 0.2350  supcon 4.1308
+epoch 136/200  loss 0.6584  test_acc 0.9553  lr 0.0486  124.6s
+  classification_kd 0.2456  supcon 4.1272
+epoch 137/200  loss 0.6701  test_acc 0.9592  lr 0.0472  123.6s
+  classification_kd 0.2574  supcon 4.1274
+epoch 138/200  loss 0.6509  test_acc 0.9563  lr 0.0459  124.0s
+  classification_kd 0.2398  supcon 4.1109
+epoch 139/200  loss 0.6438  test_acc 0.9576  lr 0.0445  124.0s
+  classification_kd 0.2326  supcon 4.1123
+epoch 140/200  loss 0.6400  test_acc 0.9594  lr 0.0432  123.6s
+  classification_kd 0.2288  supcon 4.1119
+epoch 141/200  loss 0.6575  test_acc 0.9591  lr 0.0419  124.5s
+  classification_kd 0.2471  supcon 4.1033
+epoch 142/200  loss 0.6438  test_acc 0.9575  lr 0.0406  123.8s
+  classification_kd 0.2341  supcon 4.0968
+epoch 143/200  loss 0.6756  test_acc 0.9607  lr 0.0393  124.3s
+  classification_kd 0.2667  supcon 4.0894
+epoch 144/200  loss 0.6525  test_acc 0.9592  lr 0.0380  124.0s
+  classification_kd 0.2437  supcon 4.0881
+epoch 145/200  loss 0.6395  test_acc 0.9562  lr 0.0368  123.2s
+  classification_kd 0.2310  supcon 4.0849
+epoch 146/200  loss 0.6472  test_acc 0.9655  lr 0.0355  124.0s
+  classification_kd 0.2394  supcon 4.0780
+epoch 147/200  loss 0.6378  test_acc 0.9628  lr 0.0343  124.4s
+  classification_kd 0.2300  supcon 4.0774
+epoch 148/200  loss 0.6401  test_acc 0.9586  lr 0.0331  123.6s
+  classification_kd 0.2324  supcon 4.0775
+epoch 149/200  loss 0.6335  test_acc 0.9639  lr 0.0319  123.9s
+  classification_kd 0.2265  supcon 4.0696
+epoch 150/200  loss 0.6164  test_acc 0.9617  lr 0.0307  124.2s
+  classification_kd 0.2098  supcon 4.0665
+epoch 151/200  loss 0.6218  test_acc 0.9607  lr 0.0296  124.3s
+  classification_kd 0.2158  supcon 4.0605
+epoch 152/200  loss 0.6279  test_acc 0.9629  lr 0.0284  124.0s
+  classification_kd 0.2220  supcon 4.0591
+epoch 153/200  loss 0.6533  test_acc 0.9624  lr 0.0273  124.1s
+  classification_kd 0.2477  supcon 4.0560
+epoch 154/200  loss 0.6245  test_acc 0.9640  lr 0.0262  123.7s
+  classification_kd 0.2194  supcon 4.0510
+epoch 155/200  loss 0.6224  test_acc 0.9628  lr 0.0251  123.7s
+  classification_kd 0.2182  supcon 4.0424
+epoch 156/200  loss 0.6365  test_acc 0.9627  lr 0.0241  123.7s
+  classification_kd 0.2325  supcon 4.0401
+epoch 157/200  loss 0.6056  test_acc 0.9638  lr 0.0231  124.0s
+  classification_kd 0.2021  supcon 4.0344
+epoch 158/200  loss 0.6225  test_acc 0.9632  lr 0.0220  124.0s
+  classification_kd 0.2190  supcon 4.0343
+epoch 159/200  loss 0.6149  test_acc 0.9629  lr 0.0210  124.1s
+  classification_kd 0.2118  supcon 4.0312
+epoch 160/200  loss 0.6289  test_acc 0.9665  lr 0.0201  123.7s
+  classification_kd 0.2265  supcon 4.0241
+epoch 161/200  loss 0.5951  test_acc 0.9684  lr 0.0191  124.1s
+  classification_kd 0.1926  supcon 4.0250
+epoch 162/200  loss 0.6168  test_acc 0.9686  lr 0.0182  124.2s
+  classification_kd 0.2148  supcon 4.0191
+epoch 163/200  loss 0.6096  test_acc 0.9686  lr 0.0172  123.8s
+  classification_kd 0.2082  supcon 4.0137
+epoch 164/200  loss 0.6010  test_acc 0.9672  lr 0.0164  124.1s
+  classification_kd 0.1999  supcon 4.0108
+epoch 165/200  loss 0.6121  test_acc 0.9697  lr 0.0155  123.9s
+  classification_kd 0.2110  supcon 4.0109
+epoch 166/200  loss 0.6066  test_acc 0.9685  lr 0.0146  123.8s
+  classification_kd 0.2061  supcon 4.0046
+epoch 167/200  loss 0.5942  test_acc 0.9692  lr 0.0138  124.3s
+  classification_kd 0.1937  supcon 4.0056
+epoch 168/200  loss 0.6093  test_acc 0.9705  lr 0.0130  124.2s
+  classification_kd 0.2090  supcon 4.0025
+epoch 169/200  loss 0.5840  test_acc 0.9719  lr 0.0122  123.8s
+  classification_kd 0.1842  supcon 3.9979
+epoch 170/200  loss 0.6076  test_acc 0.9712  lr 0.0115  123.5s
+  classification_kd 0.2083  supcon 3.9924
+epoch 171/200  loss 0.6069  test_acc 0.9710  lr 0.0107  124.1s
+  classification_kd 0.2077  supcon 3.9925
+epoch 172/200  loss 0.5946  test_acc 0.9715  lr 0.0100  123.2s
+  classification_kd 0.1951  supcon 3.9952
+epoch 173/200  loss 0.5967  test_acc 0.9712  lr 0.0093  124.3s
+  classification_kd 0.1972  supcon 3.9947
+epoch 174/200  loss 0.5819  test_acc 0.9717  lr 0.0086  123.7s
+  classification_kd 0.1834  supcon 3.9858
+epoch 175/200  loss 0.6213  test_acc 0.9735  lr 0.0080  124.1s
+  classification_kd 0.2226  supcon 3.9879
+epoch 176/200  loss 0.5791  test_acc 0.9726  lr 0.0074  124.2s
+  classification_kd 0.1807  supcon 3.9846
+epoch 177/200  loss 0.5790  test_acc 0.9734  lr 0.0068  123.9s
+  classification_kd 0.1810  supcon 3.9798
+epoch 178/200  loss 0.5861  test_acc 0.9733  lr 0.0062  124.0s
+  classification_kd 0.1879  supcon 3.9820
+epoch 179/200  loss 0.5985  test_acc 0.9736  lr 0.0057  124.1s
+  classification_kd 0.2006  supcon 3.9796
+epoch 180/200  loss 0.6006  test_acc 0.9751  lr 0.0051  124.1s
+  classification_kd 0.2026  supcon 3.9798
+epoch 181/200  loss 0.5985  test_acc 0.9750  lr 0.0046  123.5s
+  classification_kd 0.2007  supcon 3.9780
+epoch 182/200  loss 0.6180  test_acc 0.9742  lr 0.0042  123.8s
+  classification_kd 0.2204  supcon 3.9766
+epoch 183/200  loss 0.5725  test_acc 0.9742  lr 0.0037  123.9s
+  classification_kd 0.1749  supcon 3.9764
+epoch 184/200  loss 0.5880  test_acc 0.9738  lr 0.0033  123.9s
+  classification_kd 0.1908  supcon 3.9722
+epoch 185/200  loss 0.5870  test_acc 0.9740  lr 0.0029  123.9s
+  classification_kd 0.1896  supcon 3.9740
+epoch 186/200  loss 0.5837  test_acc 0.9749  lr 0.0025  124.1s
+  classification_kd 0.1864  supcon 3.9730
+epoch 187/200  loss 0.5811  test_acc 0.9750  lr 0.0022  123.8s
+  classification_kd 0.1839  supcon 3.9721
+epoch 188/200  loss 0.5894  test_acc 0.9753  lr 0.0019  124.1s
+  classification_kd 0.1921  supcon 3.9731
+epoch 189/200  loss 0.5975  test_acc 0.9743  lr 0.0016  123.9s
+  classification_kd 0.2006  supcon 3.9692
+epoch 190/200  loss 0.5782  test_acc 0.9749  lr 0.0013  124.1s
+  classification_kd 0.1812  supcon 3.9705
+epoch 191/200  loss 0.5850  test_acc 0.9739  lr 0.0010  123.4s
+  classification_kd 0.1879  supcon 3.9703
+epoch 192/200  loss 0.5781  test_acc 0.9748  lr 0.0008  124.3s
+  classification_kd 0.1813  supcon 3.9682
+epoch 193/200  loss 0.5849  test_acc 0.9744  lr 0.0006  124.0s
+  classification_kd 0.1881  supcon 3.9674
+epoch 194/200  loss 0.5931  test_acc 0.9750  lr 0.0005  123.9s
+  classification_kd 0.1963  supcon 3.9684
+epoch 195/200  loss 0.5836  test_acc 0.9748  lr 0.0003  124.0s
+  classification_kd 0.1866  supcon 3.9698
+epoch 196/200  loss 0.5711  test_acc 0.9747  lr 0.0002  124.0s
+  classification_kd 0.1743  supcon 3.9680
+epoch 197/200  loss 0.5696  test_acc 0.9750  lr 0.0001  124.2s
+  classification_kd 0.1728  supcon 3.9683
+epoch 198/200  loss 0.5824  test_acc 0.9754  lr 0.0001  123.8s
+  classification_kd 0.1856  supcon 3.9677
+epoch 199/200  loss 0.5840  test_acc 0.9753  lr 0.0000  67.2s
+  classification_kd 0.1873  supcon 3.9669
+epoch 200/200  loss 0.5841  test_acc 0.9748  lr 0.0000  65.4s
+  classification_kd 0.1874  supcon 3.9669
+saved /content/round10-shift/R10_shift.pt

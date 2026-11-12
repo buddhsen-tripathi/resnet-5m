@@ -1,0 +1,9 @@
+run          epochs   final    best  s/epoch
+R10_t12         200   97.51   97.51    123.8
+R10_shift       200   97.48   97.54    124.1
+/content/teachers/R9_combined.pt: 0.9771
+/content/round10-shift/R10_t12.pt: 0.9759
+/content/round10-shift/R10_shift.pt: 0.9768
+ensemble of 3: 0.9785
+
+(the ensemble line is not a single deployable model)

@@ -2,15 +2,16 @@
 
 Generated from [`assets/experiments.json`](../assets/experiments.json) by [`scripts/plot_experiments.py`](../scripts/plot_experiments.py).
 
-- 28 completed single-model training runs; 60-epoch architecture screens and teacher ensembles excluded.
+- 31 completed single-model training runs; 60-epoch architecture screens, teacher ensembles and the two over-budget round 11 teachers excluded.
 - Values reproduce the round tables in README.md; each run uses its recorded evaluation protocol.
 - No-TTA values generally come from mixed-precision training evaluation; R8 and R9 use final full-precision evaluation.
 - R6 is 97.25% in its original training log and 97.26% in the later H200 full-precision re-evaluation.
-- Kaggle scores refer to the recorded standard flip-TTA submission; alternative zoom/shift submissions are excluded.
+- Kaggle scores refer to the recorded standard flip-TTA submission; alternative zoom/shift, BatchNorm-adaptation and balanced-decoding submissions are excluded.
 - Missing Kaggle scores mean no recorded submission for that checkpoint and protocol.
 - Seeds, hardware, augmentation and teachers vary across rounds; these are individual runs, not controlled comparisons or multi-seed estimates.
 - The public leaderboard scores 1,000 images (50%); the other 1,000 form the private split.
-- Parameter counts refer to the inference classifier. R9 also trains a 45,824-parameter projection head; its total remains below 5M.
+- Parameter counts refer to the inference classifier. R9, R10 and R11 also train a 45,824-parameter projection head; their totals remain below 5M.
+- Round 10 and 11 checkpoints are not release assets; R10_t12's inference export is in weights/.
 
 | Round | Checkpoint | Classifier parameters | Epochs | CIFAR-10 final (%) | Flip TTA (%) | Kaggle public | Record |
 |---|---|---:|---:|---:|---:|---:|---|
@@ -42,3 +43,6 @@ Generated from [`assets/experiments.json`](../assets/experiments.json) by [`scri
 | 7 | [R7_zoom_a7](https://github.com/buddhsen-tripathi/resnet-5m/releases/download/v0.2/R7_zoom_a7.pt) | 4,995,226 | 200 | 97.01 | 97.03 | 0.896 | [source](../logs/7-zoom/R7_zoom_a7.log) |
 | 8 | [R8_base_300](https://github.com/buddhsen-tripathi/resnet-5m/releases/download/v0.3/R8_base_300.pt) | 4,995,226 | 300 | 97.25 | 97.46 | 0.895 | [source](../logs/8-duration/R8_base_300.log) |
 | 9 | [R9_combined](https://github.com/buddhsen-tripathi/resnet-5m/releases/download/v0.3/R9_combined.pt) | 4,937,794 | 200 | 97.54 | 97.70 | 0.901 | [source](../logs/9-combined/R9_combined.log) |
+| 10 | [R10_t12](../weights/R10_t12.pt) | 4,937,794 | 200 | 97.51 | 97.59 | 0.901 | [source](../logs/10-shift/R10_t12.log) |
+| 10 | R10_shift | 4,937,794 | 200 | 97.48 | 97.68 | 0.894 | [source](../logs/10-shift/R10_shift.log) |
+| 11 | R11_wide | 4,937,794 | 200 | 97.33 | 97.56 | 0.894 | [source](../logs/11-wide-teachers/R11_wide.log) |

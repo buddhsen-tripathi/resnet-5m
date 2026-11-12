@@ -2,21 +2,22 @@
   "source": "assets/experiments.json",
   "script": "scripts/plot_experiments.py",
   "matplotlib": "3.11.2",
-  "runs": 28,
+  "runs": 31,
   "transformations": [
     "Kaggle fractions multiplied by 100",
     "rows retained in round order",
     "no smoothing or aggregation"
   ],
   "notes": [
-    "28 completed single-model training runs; 60-epoch architecture screens and teacher ensembles excluded.",
+    "31 completed single-model training runs; 60-epoch architecture screens, teacher ensembles and the two over-budget round 11 teachers excluded.",
     "Values reproduce the round tables in README.md; each run uses its recorded evaluation protocol.",
     "No-TTA values generally come from mixed-precision training evaluation; R8 and R9 use final full-precision evaluation.",
     "R6 is 97.25% in its original training log and 97.26% in the later H200 full-precision re-evaluation.",
-    "Kaggle scores refer to the recorded standard flip-TTA submission; alternative zoom/shift submissions are excluded.",
+    "Kaggle scores refer to the recorded standard flip-TTA submission; alternative zoom/shift, BatchNorm-adaptation and balanced-decoding submissions are excluded.",
     "Missing Kaggle scores mean no recorded submission for that checkpoint and protocol.",
     "Seeds, hardware, augmentation and teachers vary across rounds; these are individual runs, not controlled comparisons or multi-seed estimates.",
     "The public leaderboard scores 1,000 images (50%); the other 1,000 form the private split.",
-    "Parameter counts refer to the inference classifier. R9 also trains a 45,824-parameter projection head; its total remains below 5M."
+    "Parameter counts refer to the inference classifier. R9, R10 and R11 also train a 45,824-parameter projection head; their totals remain below 5M.",
+    "Round 10 and 11 checkpoints are not release assets; R10_t12's inference export is in weights/."
   ]
 }

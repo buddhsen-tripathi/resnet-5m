@@ -1,0 +1,36 @@
+{
+  "round": 10,
+  "status": "complete",
+  "hardware": "Colab Pro, one NVIDIA A100; both runs trained side by side on the same GPU",
+  "notebook": "notebooks/round10_shift.ipynb",
+  "epochs": 200,
+  "seed": 1,
+  "teachers": "R9's ten teachers plus R8_base_300 and R9_combined, flip-averaged",
+  "runs": {
+    "R10_t12": {
+      "change_from_R9": "12 teachers",
+      "final_training_evaluation": 0.9751,
+      "best_training_evaluation": 0.9751,
+      "flip_tta": 0.9759,
+      "median_epoch_seconds": 123.8,
+      "kaggle_ref": "58037571",
+      "kaggle_public": 0.901
+    },
+    "R10_shift": {
+      "change_from_R9": "12 teachers, --resample 0.5 --resample-size 48 64 --jitter 0.2 --jitter-p 0.5",
+      "final_training_evaluation": 0.9748,
+      "best_training_evaluation": 0.9754,
+      "flip_tta": 0.9768,
+      "median_epoch_seconds": 124.1,
+      "kaggle_ref": "58037287",
+      "kaggle_public": 0.894
+    }
+  },
+  "same_evaluation_R9_combined_flip": 0.9771,
+  "ensemble_of_R9_R10_t12_R10_shift_flip": 0.9785,
+  "notes": [
+    "Flip-TTA values come from evaluate.py in the notebook's final cell (flip-evaluation.log); R9 measures 97.71% there and 97.70% on the round 9 H200.",
+    "After a runtime restart, R10_t12 resumed from epoch 3 and R10_shift from epoch 2; resumed epochs continue the same cosine schedule.",
+    "The two-run ensemble line is not a deployable model."
+  ]
+}

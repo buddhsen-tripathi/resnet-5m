@@ -1,0 +1,43 @@
+{
+  "method": "scripts/balance.py: optimal assignment of flip-TTA log-probabilities to exactly 200 predictions per class; no labels, no weight updates",
+  "checkpoint": "weights/R9_combined.pt",
+  "cifar10_check": {
+    "subsets": 25,
+    "subset_size": 2000,
+    "per_class": 200,
+    "mean_changed_predictions": 17,
+    "mean_accuracy_change_points": 0.04,
+    "range_points": [
+      -0.35,
+      0.35
+    ]
+  },
+  "hidden_set": {
+    "changed_predictions": "68/2000",
+    "median_top1_probability_of_changed": 0.41,
+    "raw_class_counts": {
+      "0": 174,
+      "1": 221,
+      "2": 203,
+      "3": 211,
+      "4": 200,
+      "5": 212,
+      "6": 188,
+      "7": 201,
+      "8": 195,
+      "9": 195
+    },
+    "submission_sha256": "1e7082c93375e06287f2d4f58c66e068a18cc915c30fe5d13a426618cc35fd7d"
+  },
+  "kaggle_submission": {
+    "ref": "58070730",
+    "fileName": "submission_R9_balanced.csv",
+    "date": "2026-11-06 22:29:11.200000",
+    "description": "R9_combined (4,937,794 params, 200 ep, 10 teachers), flip TTA, balanced decoding: optimal assignment to 200 predictions per class; no labels, no test-time training, no weight updates. CIFAR-10 97.54% raw / 97.70% flip.",
+    "status": "SubmissionStatus.COMPLETE",
+    "publicScore": "0.89300",
+    "privateScore": "0.87300"
+  },
+  "submission_record_retrieved": "2026-11-12",
+  "conclusion": "Public score fell from 0.901 to 0.893, so balanced decoding was dropped from the round 11 finish stage."
+}
