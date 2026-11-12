@@ -1,10 +1,17 @@
 [project]
 name = "resnet-5m"
-version = "0.1.0"
+version = "0.4.0"
 description = "Parameter-efficient ResNet (<5M params) for CIFAR-10"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 dependencies = [
     "numpy",
     "torch>=2.4",
     "torchvision>=0.19",
 ]
+
+[project.urls]
+Repository = "https://github.com/buddhsen-tripathi/resnet-5m"
+Releases = "https://github.com/buddhsen-tripathi/resnet-5m/releases"

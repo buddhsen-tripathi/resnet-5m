@@ -11,7 +11,6 @@ Generated from [`assets/experiments.json`](../assets/experiments.json) by [`scri
 - Seeds, hardware, augmentation and teachers vary across rounds; these are individual runs, not controlled comparisons or multi-seed estimates.
 - The public leaderboard scores 1,000 images (50%); the other 1,000 form the private split.
 - Parameter counts refer to the inference classifier. R9, R10 and R11 also train a 45,824-parameter projection head; their totals remain below 5M.
-- Round 10 and 11 checkpoints are not release assets; R10_t12's inference export is in weights/.
 
 | Round | Checkpoint | Classifier parameters | Epochs | CIFAR-10 final (%) | Flip TTA (%) | Kaggle public | Record |
 |---|---|---:|---:|---:|---:|---:|---|
@@ -43,6 +42,6 @@ Generated from [`assets/experiments.json`](../assets/experiments.json) by [`scri
 | 7 | [R7_zoom_a7](https://github.com/buddhsen-tripathi/resnet-5m/releases/download/v0.2/R7_zoom_a7.pt) | 4,995,226 | 200 | 97.01 | 97.03 | 0.896 | [source](../logs/7-zoom/R7_zoom_a7.log) |
 | 8 | [R8_base_300](https://github.com/buddhsen-tripathi/resnet-5m/releases/download/v0.3/R8_base_300.pt) | 4,995,226 | 300 | 97.25 | 97.46 | 0.895 | [source](../logs/8-duration/R8_base_300.log) |
 | 9 | [R9_combined](https://github.com/buddhsen-tripathi/resnet-5m/releases/download/v0.3/R9_combined.pt) | 4,937,794 | 200 | 97.54 | 97.70 | 0.901 | [source](../logs/9-combined/R9_combined.log) |
-| 10 | [R10_t12](../weights/R10_t12.pt) | 4,937,794 | 200 | 97.51 | 97.59 | 0.901 | [source](../logs/10-shift/R10_t12.log) |
-| 10 | R10_shift | 4,937,794 | 200 | 97.48 | 97.68 | 0.894 | [source](../logs/10-shift/R10_shift.log) |
-| 11 | R11_wide | 4,937,794 | 200 | 97.33 | 97.56 | 0.894 | [source](../logs/11-wide-teachers/R11_wide.log) |
+| 10 | [R10_t12](https://github.com/buddhsen-tripathi/resnet-5m/releases/download/v0.4/R10_t12.pt) | 4,937,794 | 200 | 97.51 | 97.59 | 0.901 | [source](../logs/10-shift/R10_t12.log) |
+| 10 | [R10_shift](https://github.com/buddhsen-tripathi/resnet-5m/releases/download/v0.4/R10_shift.pt) | 4,937,794 | 200 | 97.48 | 97.68 | 0.894 | [source](../logs/10-shift/R10_shift.log) |
+| 11 | [R11_wide](https://github.com/buddhsen-tripathi/resnet-5m/releases/download/v0.4/R11_wide.pt) | 4,937,794 | 200 | 97.33 | 97.56 | 0.894 | [source](../logs/11-wide-teachers/R11_wide.log) |

@@ -73,13 +73,8 @@ def main():
               "|---|---|---:|---:|---:|---:|---:|---|"]
     for r in runs:
         score = "—" if r["kaggle_public"] is None else f'{r["kaggle_public"]:.3f}'
-        if r["release"]:
-            name = f'[{r["run"]}](https://github.com/buddhsen-tripathi/resnet-5m/releases/download/{r["release"]}/{r["run"]}.pt)'
-        elif r.get("weights"):
-            name = f'[{r["run"]}](../{r["weights"]})'
-        else:
-            name = r["run"]
-        lines.append(f'| {r["round"]} | {name} | {r["parameters"]:,} | {r["epochs"]} | '
+        url = f'https://github.com/buddhsen-tripathi/resnet-5m/releases/download/{r["release"]}/{r["run"]}.pt'
+        lines.append(f'| {r["round"]} | [{r["run"]}]({url}) | {r["parameters"]:,} | {r["epochs"]} | '
                      f'{r["cifar10_final_percent"]:.2f} | {r["cifar10_flip_percent"]:.2f} | {score} | '
                      f'[source](../{r["source"]}) |')
     (ROOT / "docs/model-comparison.md").write_text("\n".join(lines) + "\n")

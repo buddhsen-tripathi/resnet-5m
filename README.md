@@ -45,7 +45,7 @@ We trained **31 single models across eleven rounds**, exploring architecture, au
 | [10](#round-10-twelve-teachers-and-shift-augmentation) | Twelve teachers and shift augmentation | **0.901** | `R10_t12` |
 | [11](#round-11-wide-teachers) | Wide teachers above the student budget | 0.894 | `R11_wide` |
 
-Each configuration has one recorded seed. Recipes, teachers and hardware vary across rounds; the tables describe these experiments rather than establish universal rankings of training methods. Kaggle scores are public scores; the private leaderboard determines the final ranking.
+Each configuration has one recorded seed. Recipes, teachers and hardware vary across rounds; the tables describe these experiments rather than establish universal rankings of training methods. Kaggle scores are public-leaderboard scores on 1,000 of the 2,000 hidden test images.
 
 ## Model weights
 
@@ -57,23 +57,25 @@ uv run python evaluate.py weights/R9_combined.pt       # 97.70% with flip TTA
 uv run python predict.py --checkpoint weights/R9_combined.pt --out submission.csv
 ```
 
-Evaluation downloads CIFAR-10 automatically. Prediction needs the competition files in `data/kaggle/`; see [Kaggle notes](#kaggle-notes). Earlier baselines, the R8 duration experiment and round 10's `R10_t12` are also included in `weights/`.
+Evaluation downloads CIFAR-10 automatically. Prediction reads the competition's test images, which are not included; see [Usage](#usage). Earlier baselines, the R8 duration experiment and round 10's `R10_t12` are also included in `weights/`.
 
 | Release | Rounds | Models | Contents |
 |---|---|---:|---|
+| [v0.4](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.4) | 10–11 | 5 | Twelve-teacher, shift-augmentation and wide-teacher students, plus the two 36.7M wide teachers |
 | [v0.3](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.3) | 8–9 | 2 | R8's 300-epoch experiment and R9's best-scoring combined recipe |
 | [v0.2](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.2) | 4–7 | 12 | Architecture, teacher count, regularization and zoom experiments |
 | [v0.1](https://github.com/buddhsen-tripathi/resnet-5m/releases/tag/v0.1) | 1–3 | 14 | Initial architecture, augmentation and distillation experiments |
 
 ```bash
-gh release download v0.3 -p '*.pt' -D checkpoints     # the two latest models
+gh release download v0.4 -p '*.pt' -D checkpoints     # rounds 10–11, including the wide teachers
+gh release download v0.3 -p '*.pt' -D checkpoints     # rounds 8–9, including the best model
 gh release download v0.2 -p '*.pt' -D checkpoints     # rounds 4–7
 gh release download v0.1 -p '*.pt' -D checkpoints     # rounds 1–3
 ```
 
-Each file is named after its run and contains the student weights and model configuration (~19–20 MB). These exports load in `evaluate.py`, `predict.py` and as distillation teachers (`--teacher`); resuming requires a full training checkpoint with optimizer state. R9's training-only projection head is omitted from its inference export. The exact R8/R9 Kaggle exports and SHA-256 checksums are recorded in [`weights/round8-9.json`](weights/round8-9.json), also attached to v0.3, and R10_t12's in [`weights/round10.json`](weights/round10.json). Round 10–11 checkpoints are not yet release assets; checksums for R11 and its two wide teachers are in [`logs/11-wide-teachers/vm-manifest.sha256`](logs/11-wide-teachers/vm-manifest.sha256). The 60-epoch architecture screens are not release assets.
+Each file is named after its run and contains the model weights and configuration (~19–20 MB for students, ~147 MB for the wide teachers). These exports load in `evaluate.py`, `predict.py` and as distillation teachers (`--teacher`); resuming requires a full training checkpoint with optimizer state. The training-only projection head of R9–R11 is omitted from their inference exports. Configurations, results and SHA-256 checksums are recorded in [`weights/round8-9.json`](weights/round8-9.json) and [`weights/round10-11.json`](weights/round10-11.json), which are also attached to v0.3 and v0.4. The 60-epoch architecture screens are not release assets.
 
-[v0.3 release notes](docs/releases/v0.3.md) include the two run summaries, inference commands and checkpoint limitations.
+Release notes for every version are in [`docs/releases/`](docs/releases/), with run summaries, inference commands and checkpoint limitations.
 
 ## Usage
 
@@ -85,9 +87,28 @@ uv run python train.py --teacher weights/R6_base.pt --out checkpoints/student.pt
 uv run python predict.py --checkpoint checkpoints/student.pt
 ```
 
-`predict.py` reads `data/kaggle/test.csv` and `data/kaggle/test_images/`, averages each image with its horizontal flip (`--shift 1` also averages over 1-pixel translations and `--zoom 0.8 1.25` over scale factors; `evaluate.py` takes the same flags), and writes `submission.csv` (`id,label`). Checkpoints store the model config, so any run can be loaded without extra flags. `train.py --resume` continues from the `--out` checkpoint after an interruption; repeat the original architecture and training arguments with `--resume` added. The checkpoint must contain optimizer and scheduler state. CUDA, Apple MPS and CPU are selected automatically in that order; a CUDA GPU is recommended for the full experiments.
+`predict.py` reads `test.csv` (`id,filename`) and the 32x32 PNGs in `test_images/` from `data/kaggle/`, or from `--data-dir`, averages each image with its horizontal flip (`--shift 1` also averages over 1-pixel translations and `--zoom 0.8 1.25` over scale factors; `evaluate.py` takes the same flags), and writes `submission.csv` (`id,label`). Checkpoints store the model config, so any run can be loaded without extra flags. `train.py --resume` continues from the `--out` checkpoint after an interruption; repeat the original architecture and training arguments with `--resume` added. The checkpoint must contain optimizer and scheduler state. CUDA, Apple MPS and CPU are selected automatically in that order; a CUDA GPU is recommended for the full experiments.
 
 The default `train.py` command reproduces the original A architecture and baseline recipe. The best submitted model uses a slightly narrower S2 architecture and ten teachers; see the complete [round 9 command](#round-9-combined-data-focused-recipe). For Colab, use the notebooks linked in each round; for NYU HPC, see [`hpc/README.md`](hpc/README.md).
+
+## Project structure
+
+```text
+model.py             pre-activation ResNet, parameter counting and flip TTA
+train.py             training, distillation, augmentation flags and the 5M budget check
+evaluate.py          CIFAR-10 test accuracy of checkpoints and their ensemble
+predict.py           predictions for a folder of test images (id,label CSV)
+weights/             inference exports of selected models, with checksum records
+docs/training.md     exact training commands for every round
+docs/model-comparison.md  every completed model, with release and log links
+docs/releases/       notes for each weights release
+logs/                per-epoch logs, evaluations and run records, one folder per round
+notebooks/           Colab notebooks for rounds 4-7 and 10 (with embedded training code) and Kaggle prediction
+hpc/                 Slurm jobs and setup for NYU HPC cloud bursting
+scripts/             plotting and balanced decoding
+assets/              figures and their source data
+tests/               unit tests (uv run python -m unittest tests.test_training)
+```
 
 ## Model
 
@@ -357,8 +378,6 @@ The two largest gains so far came from distillation in rounds 3 and 5, so this r
 
 **Balanced decoding.** The hidden set has 200 images per class, while R9's predictions range from 174 airplanes to 221 automobiles. [`scripts/balance.py`](scripts/balance.py) keeps the model unchanged and reassigns predictions so that each class receives exactly 200, choosing the assignment with the highest total log-probability (prior correction under label shift, Saerens et al. 2002). On 25 balanced 2,000-image subsets of CIFAR-10 test it changed about 17 predictions and moved accuracy by +0.04 points on average (−0.35 to +0.35). On the hidden set it changed 68 of R9's 2,000 predictions and scored **0.893**, below R9's 0.901, so it was not used further. The record is in [`logs/11-wide-teachers/balanced-decoding.json`](logs/11-wide-teachers/balanced-decoding.json).
 
-## Kaggle notes
+## License
 
-- The test set is 2,000 32x32 PNGs plus `test.csv` (`id,filename`); 1,000 images determine the public score and 1,000 the private score. Submissions are `id,label` with CIFAR-10 class indices. These files and account credentials are not included in the repository.
-- For local prediction, place `test.csv` in `data/kaggle/` and the PNGs in `data/kaggle/test_images/`, or pass the containing directory with `--data-dir`. `predict.py` writes a CSV locally; it does not submit it to Kaggle.
-- Bulk download is not available for this competition, and per-file API downloads are rate-limited (HTTP 429). Predictions can instead be made inside a private Kaggle notebook with the competition data attached and the checkpoint uploaded as a private dataset, running `predict.py --data-dir <competition input dir>`.
+Released under the [MIT License](LICENSE). The competition test images and Kaggle data are not part of this repository.
