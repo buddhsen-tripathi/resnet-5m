@@ -156,7 +156,7 @@ uv run python train.py --widths 128 192 228 --blocks 4 3 2 --no-se \
 
 [Results and analysis](../README.md#round-10-twelve-teachers-and-shift-augmentation)
 
-The R9 recipe with R8_base_300 and R9_combined added as teachers (`gh release download v0.3 -p '*.pt' -D checkpoints`). The runs used [`notebooks/round10_shift.ipynb`](../notebooks/round10_shift.ipynb) on a Colab A100; [`hpc/round10.sh`](../hpc/round10.sh) submits the same two runs as Slurm jobs.
+The R9 recipe with R8_base_300 and R9_combined added as teachers (`gh release download v0.3 -p '*.pt' -D checkpoints`). The runs used [`notebooks/round10_shift.ipynb`](../notebooks/round10_shift.ipynb) on a Colab A100.
 
 ```bash
 A=(--widths 128 192 228 --blocks 4 3 2 --no-se
